@@ -2,10 +2,12 @@
  * Set Vercel production env for Phase 1.
  * Never prints secret values. DRY_RUN stays 1. PRODUCTION stays 0.
  *
- * Needs: VERCEL_TOKEN, VERCEL_PROJECT_ID (and VERCEL_ORG_ID / VERCEL_TEAM_ID if the project is on a team).
+ * Needs: VERCEL_TOKEN. Project/team IDs default to the live asoc-backend project.
  * Needs: ASOC_ADDRESS from the mainnet deploy. PRIVATE_KEY and WEBHOOK_SECRET from secrets.
  */
 const SENSITIVE = new Set(["PRIVATE_KEY", "PAYOUT_WALLET_PRIVATE_KEY", "WEBHOOK_SECRET", "VERCEL_TOKEN"]);
+const DEFAULT_PROJECT_ID = "prj_z7Gftgnp4U4bpypaBRqmIjwfNCdF";
+const DEFAULT_TEAM_ID = "team_HZVUXfYFhzCqgg2jtDLIAsld";
 
 type EnvItem = { key: string; value: string; type: "plain" | "sensitive" };
 
@@ -48,8 +50,8 @@ function plan(): EnvItem[] {
 
 async function upsert(item: EnvItem): Promise<void> {
   const token = required("VERCEL_TOKEN");
-  const projectId = required("VERCEL_PROJECT_ID");
-  const teamId = process.env.VERCEL_ORG_ID || process.env.VERCEL_TEAM_ID || "";
+  const projectId = process.env.VERCEL_PROJECT_ID || DEFAULT_PROJECT_ID;
+  const teamId = process.env.VERCEL_ORG_ID || process.env.VERCEL_TEAM_ID || DEFAULT_TEAM_ID;
   const qs = new URLSearchParams({ upsert: "true" });
   if (teamId) qs.set("teamId", teamId);
   const res = await fetch(`https://api.vercel.com/v10/projects/${projectId}/env?${qs}`, {
@@ -83,8 +85,12 @@ async function main() {
     console.log(`  ${item.key}=${shown}  type=${item.type}  target=production`);
   }
 
-  if (!process.env.VERCEL_TOKEN || !process.env.VERCEL_PROJECT_ID) {
-    console.log("\nNo VERCEL_TOKEN/VERCEL_PROJECT_ID — listing only. Secrets were not sent.");
+  console.log(
+    `  project=${process.env.VERCEL_PROJECT_ID || DEFAULT_PROJECT_ID}  team=${process.env.VERCEL_ORG_ID || process.env.VERCEL_TEAM_ID || DEFAULT_TEAM_ID}`,
+  );
+
+  if (!process.env.VERCEL_TOKEN) {
+    console.log("\nNo VERCEL_TOKEN — listing only. Secrets were not sent.");
     return;
   }
 
