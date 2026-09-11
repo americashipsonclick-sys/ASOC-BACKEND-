@@ -1,0 +1,43 @@
+{
+  "handoff": "Nishant E2E — full chain, no skipped steps",
+  "when": "2026-09-11T04:05:00Z",
+  "production": false,
+  "network": {
+    "name": "Hardhat localhost",
+    "chainId": 31337,
+    "rpc": "http://127.0.0.1:8545",
+    "notPolygonMainnet": true,
+    "reason": "PAYOUT_WALLET_PRIVATE_KEY is empty in .env. This run used the public Hardhat test key against a local EVM so USDC and ASOC actually moved. Polygon mainnet still needs the funded wallet key."
+  },
+  "loadId": "E2E-NISHANT-1789099385730",
+  "driverWallet": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+  "steps": {
+    "posted": "created",
+    "claimed": "claimed by test-driver-1",
+    "proof": "GPS 33.749,-84.388 flagged + dock photo",
+    "approved": "manual",
+    "usdc": "1.8 landed",
+    "asocMint": "1.8 minted after payout"
+  },
+  "balancesAfter": {
+    "usdc": "1.8",
+    "asoc": "1.8"
+  },
+  "txs": {
+    "payout": "0xcd47d6719ef7f0f6683feff7d1bfbf6c16498aaf5e6b436d424c04d88b3d47b9",
+    "mint": "0x7d680694c037fc51c586e7535eee66747fcaf90194b2c9c7653a40b7ba99a547"
+  },
+  "contracts": {
+    "usdc": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "payout": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "asoc": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+  },
+  "screenshots": [
+    "nishant-01-board.png",
+    "nishant-02-posted.png",
+    "nishant-03-claimed.png",
+    "nishant-04-proof.png",
+    "nishant-05-paid-usdc-mint.png",
+    "nishant-06-public-feed-paid.png"
+  ]
+}

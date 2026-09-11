@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Public haul feed — America Ships On Click</title>
+    <style>
+      :root {
+        --ink: #14171a;
+        --cream: #f4efe0;
+        --paper: #fbf6ea;
+        --green: #0f5132;
+        --amber: #e3a008;
+        --purple: #8247e5;
+        --muted: #5c5850;
+        --live: #0f5132;
+        --pending: #8a8478;
+        --claimed: #b7791f;
+        --proof: #1d4e89;
+        --submitted: #0b7a75;
+        --paid: #0f5132;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--cream);
+        color: var(--ink);
+        font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
+      }
+      header {
+        background: var(--ink);
+        color: var(--cream);
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 3px solid var(--purple);
+      }
+      header strong { letter-spacing: 0.04em; }
+      header span { color: #cfc6b0; font-size: 11px; text-transform: uppercase; }
+      header a {
+        color: var(--cream);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-decoration: none;
+        border: 2px solid var(--cream);
+        padding: 7px 12px;
+      }
+      .ticker {
+        background: var(--purple);
+        color: #fff;
+        font: 700 11px/1.2 ui-monospace, monospace;
+        text-transform: uppercase;
+        padding: 8px 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      main { max-width: 980px; margin: 0 auto; padding: 28px 16px 64px; }
+      h1 { font-size: 34px; line-height: 1.05; margin: 0 0 8px; }
+      .lede { font-style: italic; color: var(--green); margin: 0 0 20px; }
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+      .counts { display: flex; flex-wrap: wrap; gap: 8px; }
+      .count {
+        border: 1px solid var(--ink);
+        background: var(--paper);
+        padding: 4px 8px;
+        font: 700 11px/1 ui-monospace, monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .count[data-n="0"] { opacity: 0.45; }
+      button {
+        border: 2px solid var(--ink);
+        background: var(--green);
+        color: var(--cream);
+        padding: 8px 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+      }
+      .pulse {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font: 700 11px/1 ui-monospace, monospace;
+        text-transform: uppercase;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--pending);
+      }
+      .dot.ok { background: var(--green); }
+      .chain {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-left: 18px;
+      }
+      .chain::before {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        background: var(--purple);
+      }
+      .block {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 168px;
+        gap: 12px;
+        background: var(--paper);
+        border: 2px solid var(--ink);
+        padding: 12px 14px;
+      }
+      .block::before {
+        content: "";
+        position: absolute;
+        left: -16px;
+        top: 22px;
+        width: 11px;
+        height: 11px;
+        background: var(--purple);
+        clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      }
+      .id { font: 700 15px/1.2 ui-monospace, monospace; }
+      .cities {
+        margin: 8px 0 6px;
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .cities span { color: var(--muted); font-weight: 600; font-size: 13px; }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        font: 700 12px/1 ui-monospace, monospace;
+      }
+      .chip {
+        border: 2px solid currentColor;
+        padding: 4px 7px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .chip.hot { color: #9b1c1c; background: #ffe8e5; }
+      .chip.kind { color: var(--proof); background: #e8f1ff; }
+      .hauler {
+        margin-top: 8px;
+        font-weight: 700;
+        color: var(--green);
+      }
+      .hauler.open { color: var(--muted); font-weight: 600; font-style: italic; }
+      .badge {
+        display: inline-block;
+        min-width: 88px;
+        text-align: center;
+        font: 700 11px/1 ui-monospace, monospace;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 6px 8px;
+        border: 2px solid currentColor;
+        background: #fff;
+        float: right;
+      }
+      .badge.live, .badge.paid { color: var(--live); }
+      .badge.pending { color: var(--pending); }
+      .badge.claimed { color: var(--claimed); }
+      .badge.proof { color: var(--proof); }
+      .badge.submitted { color: var(--submitted); }
+      .minimap {
+        position: relative;
+        display: block;
+        width: 168px;
+        height: 124px;
+        border: 2px solid var(--ink);
+        background: #1a1f18;
+        overflow: hidden;
+        flex-shrink: 0;
+        cursor: pointer;
+        color: inherit;
+        text-decoration: none;
+      }
+      .minimap:focus { outline: 2px solid #f5c400; outline-offset: 2px; }
+      .minimap img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        display: block;
+      }
+      .minimap svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .map-empty {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #cfc6b0;
+        font-size: 11px;
+        font-style: italic;
+      }
+      .us-board {
+        border: 2px solid var(--ink);
+        background: var(--paper);
+        padding: 12px 14px 10px;
+        margin: 0 0 20px;
+      }
+      .us-board h2 {
+        margin: 0 0 8px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .us-board svg { display: block; width: 100%; height: auto; background: #c5d4c0; border: 2px solid var(--ink); }
+      .us-note { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+      .empty {
+        padding: 36px 16px;
+        text-align: center;
+        color: var(--muted);
+        font-style: italic;
+      }
+      .muted { color: var(--muted); font-size: 13px; }
+      @media (max-width: 640px) {
+        .block { grid-template-columns: 1fr; }
+        .minimap { width: 100%; height: 140px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong>AMERICA SHIPS ON CLICK</strong><br />
+        <span>Polygon history book · each load is a block</span>
+      </div>
+      <a href="/chain.html">Wallet</a>
+    </header>
+    <div class="ticker">
+      <span>Load ID · origin · destination · miles · pay · cargo. After claim: driver and truck, not a wallet.</span>
+      <span id="clock">waiting for ledger…</span>
+    </div>
+    <main>
+      <h1>THE LOADS ARE ON THE TABLE.</h1>
+      <p class="lede">A stranger should see the lane, the miles, the money, and what is riding — without an account.</p>
+      <section class="us-board">
+        <h2>Almighty US · chip to chip on the highway</h2>
+        <div id="usmap"></div>
+        <p class="us-note">Green chip is pickup. Red chip is drop. Purple line is the interstate, not a crow-fly. Drop 50-state photos in <code>public/maps/states/</code> when you have them — this grid is the socket.</p>
+      </section>
+      <div class="toolbar">
+        <div class="counts" id="counts"></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="pulse"><span class="dot" id="dot"></span><span id="live">connecting</span></span>
+          <button type="button" id="refresh">Refresh</button>
+        </div>
+      </div>
+      <div class="chain" id="rows"></div>
+      <div class="empty" id="empty" hidden>No loads on the ledger yet.</div>
+    </main>
+    <script>
+      const PUBLIC = ["live", "pending", "claimed", "proof", "submitted", "paid"];
+      const OPEN = ["pending", "created", "open", "posted", ""];
+      const CITIES = {
+        dallas: [32.78, -96.8], atlanta: [33.75, -84.39], chicago: [41.88, -87.63],
+        denver: [39.74, -104.99], phoenix: [33.45, -112.07], "los angeles": [34.05, -118.24],
+        la: [34.05, -118.24], houston: [29.76, -95.37], memphis: [35.15, -90.05],
+        miami: [25.76, -80.19], jacksonville: [30.33, -81.66], seattle: [47.61, -122.33],
+        portland: [45.52, -122.68], "kansas city": [39.1, -94.58], "st. louis": [38.63, -90.2],
+        "st louis": [38.63, -90.2], austin: [30.27, -97.74], nashville: [36.16, -86.78],
+        detroit: [42.33, -83.05], boston: [42.36, -71.06], "new york": [40.71, -74.01],
+        philadelphia: [39.95, -75.17], charlotte: [35.23, -80.84], columbus: [39.96, -83.0],
+        indianapolis: [39.77, -86.16], "san antonio": [29.42, -98.49], "fort worth": [32.76, -97.33],
+        "el paso": [31.76, -106.49], baltimore: [39.29, -76.61], milwaukee: [43.04, -87.91],
+        albuquerque: [35.08, -106.65], tucson: [32.22, -110.97], fresno: [36.74, -119.77],
+        sacramento: [38.58, -121.49], omaha: [41.26, -95.94], raleigh: [35.78, -78.64],
+        "oklahoma city": [35.47, -97.52], "las vegas": [36.17, -115.14],
+        "salt lake city": [40.76, -111.89], minneapolis: [44.98, -93.27], tampa: [27.95, -82.46],
+        orlando: [28.54, -81.38], cleveland: [41.5, -81.69], cincinnati: [39.1, -84.51],
+        pittsburgh: [40.44, -80.0], richmond: [37.54, -77.44], "kansas": [39.1, -94.58],
+      };
+      const HUBS = {
+        seattle: [47.61, -122.33], portland: [45.52, -122.68], sacramento: [38.58, -121.49],
+        sf: [37.77, -122.42], la: [34.05, -118.24], vegas: [36.17, -115.14],
+        phoenix: [33.45, -112.07], "salt lake": [40.76, -111.89], denver: [39.74, -104.99],
+        albuquerque: [35.08, -106.65], "el paso": [31.76, -106.49], "okc": [35.47, -97.52],
+        dallas: [32.78, -96.8], houston: [29.76, -95.37], "san antonio": [29.42, -98.49],
+        "kansas city": [39.1, -94.58], omaha: [41.26, -95.94], "st louis": [38.63, -90.2],
+        memphis: [35.15, -90.05], minneapolis: [44.98, -93.27], chicago: [41.88, -87.63],
+        indy: [39.77, -86.16], nashville: [36.16, -86.78], atlanta: [33.75, -84.39],
+        cincinnati: [39.1, -84.51], detroit: [42.33, -83.05], columbus: [39.96, -83.0],
+        cleveland: [41.5, -81.69], charlotte: [35.23, -80.84], jacksonville: [30.33, -81.66],
+        tampa: [27.95, -82.46], miami: [25.76, -80.19], raleigh: [35.78, -78.64],
+        richmond: [37.54, -77.44], dc: [38.91, -77.04], philly: [39.95, -75.17],
+        nyc: [40.71, -74.01], boston: [42.36, -71.06],
+      };
+      const ROADS = [
+        ["seattle", "portland", "sacramento", "sf", "la"],
+        ["la", "vegas", "salt lake", "denver"],
+        ["la", "phoenix", "el paso", "san antonio", "houston", "jacksonville"],
+        ["dallas", "okc", "memphis", "nashville", "charlotte", "raleigh"],
+        ["dallas", "atlanta"],
+        ["denver", "kansas city", "st louis", "indy", "columbus", "philly", "nyc"],
+        ["sf", "salt lake", "omaha", "chicago", "cleveland", "boston"],
+        ["seattle", "minneapolis", "chicago"],
+        ["minneapolis", "kansas city", "dallas", "san antonio"],
+        ["chicago", "st louis", "memphis"],
+        ["detroit", "cincinnati", "atlanta", "tampa", "miami"],
+        ["boston", "nyc", "philly", "dc", "richmond", "charlotte", "jacksonville", "miami"],
+        ["houston", "dallas", "okc"],
+      ];
+      const rowsEl = document.getElementById("rows");
+      const emptyEl = document.getElementById("empty");
+      const countsEl = document.getElementById("counts");
+      const liveEl = document.getElementById("live");
+      const clockEl = document.getElementById("clock");
+      const dotEl = document.getElementById("dot");
+      let loads = [];
+
+      function payloadOf(load) {
+        const raw = load && load.payload;
+        if (raw && typeof raw === "object") return raw;
+        if (typeof raw === "string") {
+          try { return JSON.parse(raw); } catch { return {}; }
+        }
+        return {};
+      }
+
+      function pick(obj, keys) {
+        for (const key of keys) {
+          const value = obj && obj[key];
+          if (value != null && String(value).trim() && String(value) !== "true" && String(value) !== "false") {
+            return String(value).trim();
+          }
+        }
+        return "";
+      }
+
+      function originCity(load) {
+        const p = payloadOf(load);
+        return pick(load, ["origin_label", "origin", "from", "pickup", "pickup_city", "origin_city"])
+          || pick(p, ["origin_label", "origin", "from", "pickup", "pickup_city", "origin_city"]);
+      }
+
+      function destCity(load) {
+        const p = payloadOf(load);
+        return pick(load, ["dest_label", "destination", "dest", "to", "dropoff", "dropoff_city", "dest_city"])
+          || pick(p, ["dest_label", "destination", "dest", "to", "dropoff", "dropoff_city", "dest_city"]);
+      }
+
+      function publicStatus(load) {
+        const raw = String(load.status || "").toLowerCase().replace(/\s+/g, "_");
+        if (PUBLIC.includes(raw)) return raw;
+        if (load.payout_tx) return "paid";
+        if (raw === "delivered" || load.delivery_tx) return "submitted";
+        if (raw === "proof_submitted") return "proof";
+        if (raw === "picked_up" || raw === "in_transit" || raw === "driver_update" || raw === "enroute") return "live";
+        if (raw === "accepted") return "claimed";
+        if (raw === "created" || raw === "open" || raw === "posted") return "pending";
+        return raw || "pending";
+      }
+
+      function claimed(status) {
+        return OPEN.indexOf(status) === -1;
+      }
+
+      function haulerLine(load, status) {
+        if (!claimed(status)) return { text: "Unclaimed", open: true };
+        const p = payloadOf(load);
+        const name = pick(load, ["hauler_first_name", "first_name"]) || pick(p, ["firstName", "first_name", "driverName"]);
+        const truck = pick(load, ["hauler_truck", "truck_number", "truck"]) || pick(p, ["truckNumber", "truck"]);
+        const trailer = pick(load, ["hauler_trailer", "trailer"]) || pick(p, ["trailer"]);
+        const rig = truck ? "truck " + truck : trailer ? "trailer " + trailer : "";
+        if (name && rig) return { text: name + " · " + rig, open: false };
+        if (name) return { text: name, open: false };
+        if (rig) return { text: rig, open: false };
+        return { text: "Claimed", open: false };
+      }
+
+      function milesLabel(load) {
+        const n = Number(load.miles);
+        if (!Number.isFinite(n) || n <= 0) return "— mi";
+        return Math.round(n).toLocaleString() + " mi";
+      }
+
+      function payLabel(load) {
+        const p = payloadOf(load);
+        const raw = p.pay ?? p.dollars ?? p.usd ?? load.rate;
+        const n = Number(raw);
+        if (!Number.isFinite(n) || n <= 0) return "—";
+        let dollars = n;
+        if (n >= 1e6) dollars = n / 1e6;
+        else if (n >= 10000) dollars = n / 100;
+        return "$" + Math.round(dollars).toLocaleString();
+      }
+
+      function cargoTags(load) {
+        const p = payloadOf(load);
+        const tags = [];
+        const commodity = pick(load, ["commodity", "cargo", "freight", "product"])
+          || pick(p, ["commodity", "cargo", "freight", "product", "freightType"]);
+        const equipment = pick(load, ["equipment"]) || pick(p, ["equipment", "vehicleType"]);
+        const hot = load.time_sensitive === true || p.timeSensitive === true || p.express === true || p.hot === true
+          || /express|medicine|pharma|hot|rush|stat|time.?sens/i.test(commodity + " " + equipment);
+        if (hot) tags.push({ text: /medicine|pharma/i.test(commodity) ? "time-sensitive" : (p.express || /express/i.test(commodity) ? "express" : "time-sensitive"), hot: true });
+        if (commodity) tags.push({ text: commodity, kind: true });
+        else if (equipment) tags.push({ text: equipment, kind: true });
+        const seen = new Set();
+        return tags.filter((t) => {
+          const key = t.text.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function cityKey(label) {
+        return String(label || "").toLowerCase().replace(/[^a-z\s.]/g, " ").replace(/\s+/g, " ").trim().split(",")[0].trim();
+      }
+
+      function coords(load, which) {
+        const p = payloadOf(load);
+        if (which === "origin") {
+          const lat = Number(load.pickup_lat ?? p.pickupLat ?? p.pickup_lat);
+          const lng = Number(load.pickup_lng ?? p.pickupLng ?? p.pickup_lng);
+          if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
+          return CITIES[cityKey(originCity(load))] || null;
+        }
+        const lat = Number(load.dest_lat ?? p.destLat ?? p.dest_lat ?? p.dropoffLat);
+        const lng = Number(load.dest_lng ?? p.destLng ?? p.dest_lng ?? p.dropoffLng);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
+        return CITIES[cityKey(destCity(load))] || null;
+      }
+
+      function nearestHub(lat, lng) {
+        let best = "dallas";
+        let bestD = Infinity;
+        for (const [name, pair] of Object.entries(HUBS)) {
+          const d = (pair[0] - lat) ** 2 + (pair[1] - lng) ** 2;
+          if (d < bestD) {
+            bestD = d;
+            best = name;
+          }
+        }
+        return best;
+      }
+
+      function roadGraph() {
+        const g = {};
+        for (const name of Object.keys(HUBS)) g[name] = [];
+        for (const road of ROADS) {
+          for (let i = 0; i < road.length - 1; i++) {
+            g[road[i]].push(road[i + 1]);
+            g[road[i + 1]].push(road[i]);
+          }
+        }
+        return g;
+      }
+
+      const GRAPH = roadGraph();
+
+      function highwayPath(fromName, toName) {
+        if (fromName === toName) return [fromName];
+        const q = [fromName];
+        const prev = { [fromName]: null };
+        while (q.length) {
+          const cur = q.shift();
+          for (const next of GRAPH[cur] || []) {
+            if (prev[next] !== undefined) continue;
+            prev[next] = cur;
+            if (next === toName) {
+              const path = [toName];
+              let walk = toName;
+              while (prev[walk]) {
+                walk = prev[walk];
+                path.push(walk);
+              }
+              return path.reverse();
+            }
+            q.push(next);
+          }
+        }
+        return [fromName, toName];
+      }
+
+      function pathPoints(o, d) {
+        const a = nearestHub(o[0], o[1]);
+        const b = nearestHub(d[0], d[1]);
+        return highwayPath(a, b).map((name) => HUBS[name]);
+      }
+
+      function project(lat, lng, w, h) {
+        const x = ((lng + 125) / 59) * w;
+        const y = ((50 - lat) / 26) * h;
+        return [Math.max(6, Math.min(w - 6, x)), Math.max(6, Math.min(h - 6, y))];
+      }
+
+      function hex(cx, cy, r, fill) {
+        const pts = [];
+        for (let i = 0; i < 6; i++) {
+          const a = (Math.PI / 180) * (60 * i - 30);
+          pts.push((cx + r * Math.cos(a)).toFixed(1) + "," + (cy + r * Math.sin(a)).toFixed(1));
+        }
+        return `<polygon points="${pts.join(" ")}" fill="${fill}" stroke="#14171a" stroke-width="1.2"/>`;
+      }
+
+      function corridorLines(w, h) {
+        return ROADS.map((road) => {
+          const d = road.map((name) => {
+            const p = project(HUBS[name][0], HUBS[name][1], w, h);
+            return p[0].toFixed(1) + "," + p[1].toFixed(1);
+          }).join(" ");
+          return `<polyline points="${d}" fill="none" stroke="#6f8a68" stroke-width="1.4" opacity="0.85"/>`;
+        }).join("");
+      }
+
+      function routePoly(o, d, w, h, color) {
+        const pts = [o, ...pathPoints(o, d), d].map((p) => project(p[0], p[1], w, h));
+        const line = pts.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+        return `<polyline points="${line}" fill="none" stroke="${color}" stroke-width="2.4"/>`;
+      }
+
+      function paddedBbox(o, d, w, h) {
+        const midLat = (o[0] + d[0]) / 2;
+        const midLng = (o[1] + d[1]) / 2;
+        let latSpan = Math.max(Math.abs(d[0] - o[0]) * 1.45, 0.55);
+        let lngSpan = Math.max(Math.abs(d[1] - o[1]) * 1.45, 0.55);
+        const cos = Math.max(0.25, Math.cos((midLat * Math.PI) / 180));
+        const aspect = w / h;
+        if ((lngSpan * cos) / latSpan > aspect) latSpan = (lngSpan * cos) / aspect;
+        else lngSpan = (latSpan * aspect) / cos;
+        return {
+          minLng: midLng - lngSpan / 2,
+          minLat: midLat - latSpan / 2,
+          maxLng: midLng + lngSpan / 2,
+          maxLat: midLat + latSpan / 2,
+        };
+      }
+
+      function xyInBbox(lat, lng, box, w, h) {
+        return [
+          ((lng - box.minLng) / (box.maxLng - box.minLng)) * w,
+          ((box.maxLat - lat) / (box.maxLat - box.minLat)) * h,
+        ];
+      }
+
+      function satelliteSrc(box) {
+        const bbox = [box.minLng, box.minLat, box.maxLng, box.maxLat].join(",");
+        return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=" +
+          encodeURIComponent(bbox) + "&bboxSR=4326&imageSR=4326&size=400,220&format=jpg&f=image";
+      }
+
+      function nativeDirectionsUrl(destLat, destLng) {
+        if (!Number.isFinite(destLat) || !Number.isFinite(destLng)) return "";
+        const dest = destLat + "," + destLng;
+        const ua = navigator.userAgent || "";
+        if (/iPad|iPhone|iPod/i.test(ua)) {
+          return "https://maps.apple.com/?daddr=" + encodeURIComponent(dest) + "&dirflg=d";
+        }
+        return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(dest) + "&travelmode=driving";
+      }
+
+      function openNativeMaps(url) {
+        const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "");
+        if (mobile) window.location.href = url;
+        else window.open(url, "_blank", "noopener");
+      }
+
+      function miniMap(load) {
+        const o = coords(load, "origin");
+        const d = coords(load, "dest");
+        const href = d ? nativeDirectionsUrl(d[0], d[1]) : "";
+        const label = "Navigate to " + (destCity(load) || "delivery");
+        if (!o || !d) {
+          return `<div class="minimap"><span class="map-empty">no map yet</span></div>`;
+        }
+        const w = 400;
+        const h = 220;
+        const box = paddedBbox(o, d, w, h);
+        const a = xyInBbox(o[0], o[1], box, w, h);
+        const b = xyInBbox(d[0], d[1], box, w, h);
+        const photo = satelliteSrc(box);
+        const inner = `<img src="${esc(photo)}" width="400" height="220" alt="${esc(originCity(load))} to ${esc(destCity(load))} satellite route"/>
+          <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+            <line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+            <line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#F5C400" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="${a[0]}" cy="${a[1]}" r="8" fill="#0F5132" stroke="#fff" stroke-width="2"/>
+            <circle cx="${b[0]}" cy="${b[1]}" r="8" fill="#9B1C1C" stroke="#fff" stroke-width="2"/>
+          </svg>`;
+        if (!href) return `<div class="minimap">${inner}</div>`;
+        return `<a class="minimap nav-map" href="${esc(href)}" target="_blank" rel="noopener" data-dest="${d[0]},${d[1]}" aria-label="${esc(label)}">${inner}</a>`;
+      }
+
+      function drawUsMap() {
+        const host = document.getElementById("usmap");
+        if (!host) return;
+        const w = 920;
+        const h = 520;
+        const lanes = loads.map((load) => {
+          const o = coords(load, "origin");
+          const d = coords(load, "dest");
+          if (!o || !d) return "";
+          return routePoly(o, d, w, h, "#8247e5") + hex(project(o[0], o[1], w, h)[0], project(o[0], o[1], w, h)[1], 7, "#0f5132") + hex(project(d[0], d[1], w, h)[0], project(d[0], d[1], w, h)[1], 7, "#9b1c1c");
+        }).join("");
+        host.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="US highway map">
+          <rect width="${w}" height="${h}" fill="#c5d4c0"/>
+          ${corridorLines(w, h)}
+          ${lanes}
+        </svg>`;
+      }
+
+      function esc(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function stamp() {
+        clockEl.textContent = "Updated " + new Date().toLocaleTimeString();
+      }
+
+      function setLive(label, ok) {
+        liveEl.textContent = label;
+        dotEl.className = ok ? "dot ok" : "dot";
+      }
+
+      function render() {
+        const counts = { live: 0, pending: 0, claimed: 0, proof: 0, submitted: 0, paid: 0 };
+        const sorted = loads.slice().sort((a, b) => {
+          const ta = new Date(a.updated_at || a.created_at || 0).getTime();
+          const tb = new Date(b.updated_at || b.created_at || 0).getTime();
+          return tb - ta;
+        });
+        rowsEl.innerHTML = sorted.map((load) => {
+          const status = publicStatus(load);
+          if (counts[status] != null) counts[status] += 1;
+          const origin = originCity(load) || "—";
+          const dest = destCity(load) || "—";
+          const tags = cargoTags(load);
+          const hauler = haulerLine(load, status);
+          return `<article class="block">
+            <div>
+              <span class="badge ${esc(status)}">${esc(status)}</span>
+              <div class="id">${esc(load.load_id || "—")}</div>
+              <div class="cities">${esc(origin)} <span>origin</span><br/>${esc(dest)} <span>destination</span></div>
+              <div class="meta">
+                <span>${esc(milesLabel(load))}</span>
+                <span>${esc(payLabel(load))}</span>
+                ${tags.map((t) => `<span class="chip ${t.hot ? "hot" : "kind"}">${esc(t.text)}</span>`).join("")}
+              </div>
+              <div class="hauler${hauler.open ? " open" : ""}">${esc(hauler.text)}</div>
+            </div>
+            ${miniMap(load)}
+          </article>`;
+        }).join("");
+        emptyEl.hidden = sorted.length > 0;
+        countsEl.innerHTML = PUBLIC.map((key) =>
+          `<span class="count" data-n="${counts[key]}">${key} ${counts[key]}</span>`
+        ).join("");
+        drawUsMap();
+        stamp();
+      }
+
+      function upsert(load) {
+        if (!load || !load.load_id) return;
+        const i = loads.findIndex((x) => x.load_id === load.load_id);
+        if (i >= 0) loads[i] = load;
+        else loads.unshift(load);
+        render();
+      }
+
+      async function pull() {
+        const res = await fetch("/api/loads");
+        const data = await res.json();
+        loads = Array.isArray(data.loads) ? data.loads : [];
+        setLive("live", true);
+        render();
+      }
+
+      document.getElementById("refresh").onclick = () => {
+        pull().catch(() => setLive("refresh failed", false));
+      };
+
+      rowsEl.addEventListener("click", (event) => {
+        const link = event.target.closest("a.nav-map");
+        if (!link) return;
+        const url = link.getAttribute("href");
+        if (!url) return;
+        event.preventDefault();
+        openNativeMaps(url);
+      });
+
+      pull().catch(() => setLive("offline", false));
+
+      const stream = new EventSource("/api/loads/stream");
+      stream.addEventListener("snapshot", (event) => {
+        loads = JSON.parse(event.data) || [];
+        setLive("live", true);
+        render();
+      });
+      stream.addEventListener("load", (event) => {
+        upsert(JSON.parse(event.data));
+        setLive("live", true);
+      });
+      stream.onerror = () => setLive("reconnecting", false);
+      setInterval(() => {
+        pull().catch(() => {});
+      }, 20000);
+    </script>
+  </body>
+</html>

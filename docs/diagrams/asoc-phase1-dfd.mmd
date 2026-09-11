@@ -1,0 +1,61 @@
+---
+title: ASOC Phase 1 Data-Flow Diagram
+---
+flowchart LR
+    Shipper[Shipper / Load Source]
+    Approver[ASOC Approver]
+    Driver[Driver + Wallet]
+
+    subgraph App["ASOC Web App + API"]
+        LoadAPI((1. Load Intake))
+        ClaimAPI((2. Claim + GPS Proof))
+        ApproveAPI((3. Approve Load))
+        PayoutSvc((4. USDC Payout))
+        MintHook((5. Secret-Verified Mint Webhook))
+        RewardsUI((6. Stake + Claim UI))
+    end
+
+    DB[(PostgreSQL)]
+    Audit[(Audit + Run Logs)]
+
+    subgraph Base["Base"]
+        PayoutContract[[DriverPayout Contract]]
+        USDC[(USDC)]
+    end
+
+    subgraph Polygon["Polygon"]
+        ASOC[[ASOC Mint / Stake Contract]]
+        RewardBudget[(0.7% Reward Slice)]
+    end
+
+    Shipper -->|"load details, rate, route"| LoadAPI
+    LoadAPI -->|"create/update load"| DB
+    Driver -->|"claim, wallet, GPS + photos"| ClaimAPI
+    ClaimAPI -->|"claimed/proof status"| DB
+    Approver -->|"approve verified load"| ApproveAPI
+    DB -->|"load, driver wallet, payout amount"| ApproveAPI
+
+    ApproveAPI -->|"rate volume"| ASOC
+    ASOC -->|"credit 0.7% of volume"| RewardBudget
+    ApproveAPI -->|"driver + net USDC amount"| PayoutSvc
+    PayoutSvc -->|"payOnDelivery"| PayoutContract
+    USDC -->|"funded reserve"| PayoutContract
+    PayoutContract -->|"confirmed USDC transfer"| Driver
+    PayoutContract -->|"on-chain receipt / payout tx"| PayoutSvc
+
+    PayoutSvc -->|"only after confirmation"| MintHook
+    MintHook -->|"x-webhook-secret verification"| MintHook
+    MintHook -->|"driver wallet + matching payout value"| ASOC
+    ASOC -->|"ASOC bonus tokens"| Driver
+    MintHook -->|"mint tx or failure record"| DB
+
+    Driver -->|"wallet-signed stake / claim"| RewardsUI
+    RewardsUI -->|"stake(), claimBonus()"| ASOC
+    RewardBudget -->|"1x regular or 5x premium; pro-rata haircut"| ASOC
+    ASOC -->|"hourly bonus"| Driver
+
+    LoadAPI --> Audit
+    ClaimAPI --> Audit
+    ApproveAPI --> Audit
+    PayoutSvc --> Audit
+    MintHook --> Audit

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ASOC VVIP Gold flyer — print</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700&family=Oswald:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --navy: #0b3a6a;
+        --orange: #f15a22;
+        --gold: #d4af37;
+        --gold-deep: #9b7416;
+        --ink: #0e1116;
+        --paper: #fffdf6;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #d9dde3;
+        color: var(--ink);
+        font-family: Barlow, "Segoe UI", sans-serif;
+      }
+      .toolbar {
+        max-width: 8.5in;
+        margin: 0 auto;
+        padding: 18px 16px 10px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: baseline;
+      }
+      .toolbar p { margin: 0; font-size: 13px; color: #3c4654; }
+      .toolbar button {
+        border: 0;
+        background: var(--navy);
+        color: #fff;
+        font: 700 12px/1 Barlow, sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+      .flyer {
+        width: 8.5in;
+        height: 11in;
+        margin: 0 auto 48px;
+        background: var(--paper);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 12px 36px rgba(14, 17, 22, 0.18);
+      }
+      header {
+        background: var(--navy);
+        color: #fff;
+        padding: 22px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 8px solid var(--gold);
+      }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .mark {
+        width: 36px;
+        height: 36px;
+        background: var(--orange);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font: 700 22px/1 Oswald, Arial Narrow, sans-serif;
+      }
+      .word {
+        font: 700 42px/0.9 Oswald, Arial Narrow, sans-serif;
+        letter-spacing: 0.08em;
+      }
+      .word span { color: var(--orange); }
+      header small {
+        display: block;
+        margin-top: 4px;
+        letter-spacing: 0.18em;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .cta {
+        background: var(--gold);
+        color: var(--navy);
+        font: 700 14px/1 Oswald, Arial Narrow, sans-serif;
+        letter-spacing: 0.12em;
+        padding: 12px 16px;
+        text-align: center;
+      }
+      .cta small {
+        display: block;
+        margin-bottom: 5px;
+        font: 700 9px/1 Barlow, sans-serif;
+        letter-spacing: 0.16em;
+      }
+      .hero {
+        padding: 28px 32px 8px;
+        text-align: center;
+      }
+      .qr-wrap {
+        width: 3.15in;
+        height: 3.15in;
+        margin: 0 auto;
+        border: 6px solid var(--gold-deep);
+        padding: 10px;
+        background: #fff;
+      }
+      .qr-wrap img { width: 100%; height: 100%; display: block; }
+      .hero h1 {
+        margin: 16px 0 4px;
+        font: 700 42px/0.95 Oswald, Arial Narrow, sans-serif;
+        letter-spacing: 0.04em;
+        color: var(--navy);
+      }
+      .hero p {
+        margin: 0;
+        color: var(--orange);
+        font: 700 14px/1 Barlow, sans-serif;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .exclusive {
+        display: inline-block;
+        margin: 12px 0 0;
+        padding: 7px 18px;
+        background: var(--gold);
+        color: var(--navy);
+        font: 700 13px/1 Oswald, Arial Narrow, sans-serif;
+        letter-spacing: 0.18em;
+      }
+      .props {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 22px 32px 8px;
+      }
+      .props b {
+        display: block;
+        padding: 16px 14px;
+        color: #fff;
+        font: 700 28px/1 Oswald, Arial Narrow, sans-serif;
+        letter-spacing: 0.06em;
+        text-align: center;
+      }
+      .navy { background: var(--navy); }
+      .orange { background: var(--orange); }
+      .gold { background: var(--gold); color: var(--navy) !important; }
+      .load {
+        margin: 18px 32px 0;
+        border: 3px solid var(--navy);
+        border-left: 14px solid var(--gold);
+        padding: 16px 18px 14px;
+      }
+      .load em {
+        display: block;
+        font-style: normal;
+        color: var(--orange);
+        font: 700 11px/1 Barlow, sans-serif;
+        letter-spacing: 0.18em;
+      }
+      .load h2 {
+        margin: 6px 0 12px;
+        font: 700 32px/1 Oswald, Arial Narrow, sans-serif;
+        letter-spacing: 0.03em;
+        color: var(--navy);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 10px;
+      }
+      .grid span {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #5a6573;
+      }
+      .grid strong {
+        display: block;
+        margin-top: 3px;
+        font: 700 18px/1 Oswald, Arial Narrow, sans-serif;
+        color: var(--navy);
+      }
+      .note {
+        margin: 10px 0 0;
+        font-size: 12px;
+        color: #4a5668;
+      }
+      footer {
+        margin-top: auto;
+        background: var(--navy);
+        color: #fff;
+        padding: 16px 32px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font: 700 13px/1.2 Oswald, Arial Narrow, sans-serif;
+        letter-spacing: 0.06em;
+        border-top: 8px solid var(--gold);
+      }
+      footer span { color: var(--orange); }
+      @media print {
+        body { background: #fff; }
+        .toolbar { display: none; }
+        .flyer { margin: 0; box-shadow: none; }
+        @page { size: letter; margin: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <p>VVIP Gold letter flyer · 8.5 × 11 in · QR opens Post Load.</p>
+      <button type="button" onclick="window.print()">Print flyer</button>
+    </div>
+    <article class="flyer" aria-label="ASOC flyer">
+      <header>
+        <div class="brand">
+          <div class="mark">A</div>
+          <div>
+            <div class="word"><span>A</span>SOC</div>
+            <small>America Ships On Click</small>
+          </div>
+        </div>
+        <div class="cta"><small>VVIP GOLD</small>POST A LOAD</div>
+      </header>
+      <section class="hero">
+        <div class="qr-wrap">
+          <img src="qr-post-load.svg" alt="QR code to post a load at americashipsonclick.com/post-load" />
+        </div>
+        <h1>SCAN TO POST A LOAD</h1>
+        <p>americashipsonclick.com</p>
+        <div class="exclusive">VVIP GOLD · EXCLUSIVE ACCESS</div>
+      </section>
+      <section class="props">
+        <b class="navy">NO BROKERS</b>
+        <b class="gold">INSTANT PAY</b>
+        <b class="gold">REAL RATES</b>
+        <b class="navy">LIVE TRANSPARENCY</b>
+      </section>
+      <section class="load">
+        <em>VVIP sample load</em>
+        <h2>DALLAS, TX → ATLANTA, GA</h2>
+        <div class="grid">
+          <div><span>Rate</span><strong>$2.15 / MI</strong></div>
+          <div><span>Miles</span><strong>780</strong></div>
+          <div><span>Pickup</span><strong>Ready now</strong></div>
+          <div><span>Delivery</span><strong>24 hr window</strong></div>
+        </div>
+        <p class="note">Hotshot lane · posted live on ASOC · carrier net posts to Open Books</p>
+      </section>
+      <footer>
+        <div>AMERICA SHIPS ON CLICK</div>
+        <div>Direct freight. Public books.</div>
+        <div><span>americashipsonclick.com</span></div>
+      </footer>
+    </article>
+  </body>
+</html>

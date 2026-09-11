@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ASOC Phase 1 — mint, stake, bonus</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #111114;
+        --panel: #1a1a1f;
+        --line: #2a2a32;
+        --text: #ececec;
+        --muted: #9a9aa3;
+        --accent: #6ea8ff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 15px/1.45 system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        max-width: 640px;
+        padding: 24px;
+      }
+      h1 { font-size: 18px; font-weight: 600; }
+      p, .muted { color: var(--muted); }
+      label { display: block; font-size: 12px; color: var(--muted); margin: 14px 0 6px; }
+      input {
+        width: 100%;
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--line);
+        padding: 8px 10px;
+      }
+      button {
+        margin: 12px 8px 0 0;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text);
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+      button.primary { border-color: var(--accent); color: var(--accent); }
+      pre { white-space: pre-wrap; font-size: 12px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <h1>ASOC Phase 1</h1>
+    <p>Prove a wallet can mint, stake, and claim the hourly bonus. Plate logging and email are Phase 2.</p>
+    <p class="muted" id="meta">loading…</p>
+    <label>Webhook secret</label>
+    <input id="secret" type="password" placeholder="WEBHOOK_SECRET" />
+    <label>Tokens to mint</label>
+    <input id="tokens" type="number" value="100" min="1" />
+    <label>Verified payment ID</label>
+    <input id="purchaseId" type="text" placeholder="Payment provider transaction ID" />
+    <div>
+      <button class="primary" id="connect">Connect wallet</button>
+      <button id="mint">Mint via webhook</button>
+      <button id="stake">Stake</button>
+      <button id="claim">Claim hourly bonus</button>
+    </div>
+    <pre id="log"></pre>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+    <script>
+      const abi = [
+        "function stake(uint256 amount)",
+        "function claimBonus()",
+        "function balanceOf(address) view returns (uint256)",
+        "function staked(address) view returns (uint256)",
+        "function previewAccrued(address) view returns (uint256)",
+        "function approve(address spender, uint256 amount) returns (bool)",
+      ];
+      const logEl = document.getElementById("log");
+      const metaEl = document.getElementById("meta");
+      let phase = {};
+      let account = "";
+
+      function log(msg) {
+        logEl.textContent = String(msg) + "\n" + logEl.textContent;
+      }
+
+      async function provider() {
+        if (!window.ethereum) throw new Error("no wallet");
+        return new ethers.BrowserProvider(window.ethereum);
+      }
+
+      async function contract() {
+        if (!phase.asocAddress) throw new Error("ASOC_ADDRESS not set on the API");
+        const p = await provider();
+        const network = await p.getNetwork();
+        if (Number(network.chainId) !== 137) throw new Error("switch wallet to Polygon mainnet (chain 137)");
+        const signer = await p.getSigner();
+        return new ethers.Contract(phase.asocAddress, abi, signer);
+      }
+
+      async function refresh() {
+        if (!account || !phase.asocAddress) return;
+        const p = await provider();
+        const c = new ethers.Contract(phase.asocAddress, abi, p);
+        const [bal, staked, pending] = await Promise.all([
+          c.balanceOf(account),
+          c.staked(account),
+          c.previewAccrued(account),
+        ]);
+        log(
+          "wallet " +
+            account +
+            "\nbalance " +
+            ethers.formatEther(bal) +
+            "\nstaked " +
+            ethers.formatEther(staked) +
+            "\npending bonus " +
+            ethers.formatEther(pending),
+        );
+      }
+
+      fetch("/api/phase1")
+        .then((r) => r.json())
+        .then((data) => {
+          phase = data;
+          metaEl.textContent =
+            "contract " +
+            (data.asocAddress || "(set ASOC_ADDRESS)") +
+            " · dryRun " +
+            data.dryRun;
+        })
+        .catch((err) => {
+          metaEl.textContent = String(err);
+        });
+
+      document.getElementById("connect").onclick = async () => {
+        const p = await provider();
+        const accounts = await p.send("eth_requestAccounts", []);
+        const network = await p.getNetwork();
+        if (Number(network.chainId) !== 137) throw new Error("switch wallet to Polygon mainnet (chain 137)");
+        account = accounts[0];
+        log("connected " + account);
+        await refresh();
+      };
+
+      document.getElementById("mint").onclick = async () => {
+        if (!account) throw new Error("connect first");
+        const tokens = document.getElementById("tokens").value;
+        const purchaseId = document.getElementById("purchaseId").value.trim();
+        if (!purchaseId) throw new Error("verified payment ID required");
+        const secret = document.getElementById("secret").value;
+        const res = await fetch("/api/webhook/ASOC", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-webhook-secret": secret,
+          },
+          body: JSON.stringify({
+            type: "token.mint",
+            purchaseId,
+            to: account,
+            tokens,
+            volumeTokens: tokens,
+          }),
+        });
+        const body = await res.json();
+        log(JSON.stringify(body, null, 2));
+        await refresh();
+      };
+
+      document.getElementById("stake").onclick = async () => {
+        const c = await contract();
+        const tokens = document.getElementById("tokens").value;
+        const tx = await c.stake(ethers.parseEther(tokens));
+        log("stake " + tx.hash);
+        await tx.wait();
+        await refresh();
+      };
+
+      document.getElementById("claim").onclick = async () => {
+        const c = await contract();
+        const tx = await c.claimBonus();
+        log("claim " + tx.hash);
+        await tx.wait();
+        await refresh();
+      };
+    </script>
+  </body>
+</html>

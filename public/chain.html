@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ASOC chain — America Ships On Click</title>
+    <style>
+      :root {
+        --ink: #14171a;
+        --cream: #f4efe0;
+        --paper: #fbf6ea;
+        --green: #0f5132;
+        --amber: #e3a008;
+        --line: #14171a;
+        --muted: #5c5850;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--cream);
+        color: var(--ink);
+        font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
+      }
+      header {
+        background: var(--ink);
+        color: var(--cream);
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        border-bottom: 3px solid var(--amber);
+      }
+      header .actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; margin-left: auto; }
+      header a.nav {
+        color: #cfc6b0;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        white-space: nowrap;
+      }
+      header strong { letter-spacing: 0.04em; }
+      header span { color: #cfc6b0; font-size: 11px; text-transform: uppercase; }
+      .ticker {
+        background: var(--amber);
+        color: var(--ink);
+        font: 700 11px/1.2 ui-monospace, monospace;
+        text-transform: uppercase;
+        padding: 8px 16px;
+      }
+      main { max-width: 880px; margin: 0 auto; padding: 28px 16px 64px; }
+      h1 { font-size: 34px; line-height: 1.05; margin: 0 0 8px; }
+      .lede { font-style: italic; color: var(--green); margin: 0 0 24px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+      .card {
+        background: var(--paper);
+        border: 2px solid var(--ink);
+        padding: 16px;
+      }
+      h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 12px; }
+      label { display: block; font-size: 11px; text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
+      input, textarea {
+        width: 100%;
+        border: 1px solid var(--ink);
+        background: #fff;
+        color: var(--ink);
+        padding: 8px 10px;
+        font: inherit;
+      }
+      textarea { min-height: 88px; resize: vertical; }
+      button {
+        margin: 10px 8px 0 0;
+        border: 2px solid var(--ink);
+        background: var(--green);
+        color: var(--cream);
+        padding: 8px 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+      }
+      button.ghost { background: transparent; color: var(--ink); }
+      .stat { font: 700 22px/1.1 ui-monospace, monospace; }
+      .muted { color: var(--muted); font-size: 13px; }
+      pre {
+        white-space: pre-wrap;
+        font: 12px/1.4 ui-monospace, monospace;
+        background: var(--ink);
+        color: var(--cream);
+        padding: 12px;
+        min-height: 120px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong>AMERICA SHIPS ON CLICK</strong><br />
+        <span>On-chain ASOC · wallet · paid messages</span>
+      </div>
+      <div class="actions">
+        <a class="nav" href="/feed">Public feed</a>
+        <button class="ghost" id="connect" style="background:#f4efe0;color:#14171a;margin:0">Connect wallet</button>
+      </div>
+    </header>
+    <div class="ticker">Phase 1 blockchain layer · mint · stake · hourly bonus · message after wallet connects</div>
+    <main>
+      <h1>NO BROKERS. ON-CHAIN SETTLEMENT STARTS HERE.</h1>
+      <p class="lede">Connect a wallet to mint ASOC, stake for the hourly bonus, and send a paid on-chain message. Messaging is locked until the wallet exists — that is this layer.</p>
+      <p class="muted" id="meta">loading…</p>
+      <div class="grid">
+        <section class="card">
+          <h2>Wallet / bonus</h2>
+          <div class="stat" id="account">not connected</div>
+          <p class="muted" id="balances">balance — · staked — · pending —</p>
+          <label>Tokens</label>
+          <input id="tokens" type="number" value="100" min="0" />
+          <label>Webhook secret (platform mint)</label>
+          <input id="secret" type="password" placeholder="WEBHOOK_SECRET" />
+          <button id="mint">Mint</button>
+          <button id="stake">Stake</button>
+          <button id="claim">Claim hourly bonus</button>
+        </section>
+        <section class="card">
+          <h2>Paid message</h2>
+          <p class="muted">Uses the ASOC contract <code>sendPaidMessage</code>. The text is hashed on-chain so the trail is permanent. Needs a connected wallet with ASOC for the fee.</p>
+          <label>To wallet</label>
+          <input id="to" placeholder="0x…" />
+          <label>Message</label>
+          <textarea id="body" placeholder="Load update, rate confirm, pickup window…"></textarea>
+          <button id="send">Send on-chain message</button>
+        </section>
+      </div>
+      <pre id="log">waiting for wallet…</pre>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+    <script>
+      const abi = [
+        "function purchase(uint256 amount)",
+        "function stake(uint256 amount)",
+        "function claimBonus()",
+        "function balanceOf(address) view returns (uint256)",
+        "function staked(address) view returns (uint256)",
+        "function previewAccrued(address) view returns (uint256)",
+        "function sendPaidMessage(address to, bytes32 contentHash)",
+        "function messageFee() view returns (uint256)",
+      ];
+      const logEl = document.getElementById("log");
+      let phase = {};
+      let account = "";
+
+      function log(msg) {
+        logEl.textContent = String(msg) + "\n" + logEl.textContent;
+      }
+
+      async function provider() {
+        if (!window.ethereum) throw new Error("Install MetaMask or another injected wallet");
+        return new ethers.BrowserProvider(window.ethereum);
+      }
+
+      async function contract() {
+        if (!phase.asocAddress) throw new Error("Set ASOC_ADDRESS on the API, then deploy the contract");
+        return new ethers.Contract(phase.asocAddress, abi, await (await provider()).getSigner());
+      }
+
+      async function refresh() {
+        if (!account || !phase.asocAddress) return;
+        const c = new ethers.Contract(phase.asocAddress, abi, await provider());
+        const [bal, staked, pending] = await Promise.all([
+          c.balanceOf(account),
+          c.staked(account),
+          c.previewAccrued(account),
+        ]);
+        document.getElementById("balances").textContent =
+          "balance " + ethers.formatEther(bal) +
+          " ASOC · staked " + ethers.formatEther(staked) +
+          " · pending " + ethers.formatEther(pending);
+      }
+
+      fetch("/api/phase1")
+        .then((r) => r.json())
+        .then((data) => {
+          phase = data;
+          document.getElementById("meta").textContent =
+            "contract " + (data.asocAddress || "(not deployed yet)") +
+            " · dryRun " + data.dryRun;
+        })
+        .catch((err) => {
+          document.getElementById("meta").textContent = String(err);
+        });
+
+      document.getElementById("connect").onclick = async () => {
+        const accounts = await (await provider()).send("eth_requestAccounts", []);
+        account = accounts[0];
+        document.getElementById("account").textContent = account;
+        log("connected " + account);
+        await refresh();
+      };
+
+      document.getElementById("mint").onclick = async () => {
+        if (!account) throw new Error("connect first");
+        const tokens = document.getElementById("tokens").value;
+        const secret = document.getElementById("secret").value;
+        const res = await fetch("/api/webhook/ASOC", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-webhook-secret": secret },
+          body: JSON.stringify({ type: "token.mint", to: account, tokens }),
+        });
+        log(JSON.stringify(await res.json(), null, 2));
+        await refresh();
+      };
+
+      document.getElementById("stake").onclick = async () => {
+        const tx = await (await contract()).stake(ethers.parseEther(document.getElementById("tokens").value));
+        log("stake " + tx.hash);
+        await tx.wait();
+        await refresh();
+      };
+
+      document.getElementById("claim").onclick = async () => {
+        const tx = await (await contract()).claimBonus();
+        log("claim " + tx.hash);
+        await tx.wait();
+        await refresh();
+      };
+
+      document.getElementById("send").onclick = async () => {
+        if (!account) throw new Error("connect a wallet before messaging");
+        const to = document.getElementById("to").value.trim();
+        const text = document.getElementById("body").value.trim();
+        if (!to || !text) throw new Error("to + message required");
+        const hash = ethers.id(text);
+        const c = await contract();
+        const tx = await c.sendPaidMessage(to, hash);
+        log("message tx " + tx.hash + "\nhash " + hash);
+        await tx.wait();
+        await fetch("/api/webhook/ASOC", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-webhook-secret": document.getElementById("secret").value,
+          },
+          body: JSON.stringify({
+            type: "paid_message",
+            from: account,
+            to,
+            contentHash: hash,
+            txHash: tx.hash,
+          }),
+        }).catch(() => {});
+        await refresh();
+      };
+
+      window.addEventListener("error", (e) => log(e.message));
+      window.addEventListener("unhandledrejection", (e) => log(e.reason));
+    </script>
+  </body>
+</html>

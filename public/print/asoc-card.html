@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ASOC VVIP Gold card — print</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --obsidian: #090b0e;
+        --carbon: #12161c;
+        --gold: #c8a44d;
+        --gold-light: #ead9a0;
+        --champagne: #f4efe3;
+        --ink: #101318;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #d7d3ca;
+        color: var(--ink);
+        font-family: Barlow, "Segoe UI", sans-serif;
+        overflow-x: hidden;
+      }
+      .toolbar {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 22px 16px 8px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: baseline;
+      }
+      .toolbar p {
+        margin: 0;
+        font-size: 13px;
+        color: #3c4654;
+      }
+      .toolbar button {
+        border: 0;
+        background: var(--obsidian);
+        color: #fff;
+        font: 700 12px/1 Barlow, sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+      .sheet {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 28px;
+        padding: 18px 16px 64px;
+      }
+      .face {
+        width: 3.5in;
+        height: 2in;
+        background: var(--obsidian);
+        color: var(--champagne);
+        border: 1px solid var(--gold);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 28px rgba(14, 17, 22, 0.18);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 7px;
+      }
+      .mark {
+        width: 18px;
+        height: 18px;
+        background: var(--gold);
+        color: var(--obsidian);
+        display: grid;
+        place-items: center;
+        font: 600 12px/1 Barlow, sans-serif;
+      }
+      .word {
+        font: 600 20px/1 Barlow, sans-serif;
+        letter-spacing: 0.16em;
+      }
+      .word span { color: var(--gold); }
+      .sub {
+        margin: 3px 0 0;
+        font-size: 7.5px;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      .rule {
+        width: 42px;
+        height: 3px;
+        background: var(--gold);
+        margin: 6px auto 0;
+      }
+      .front {
+        padding: 8px 12px 12px;
+        display: grid;
+        grid-template-columns: 1fr 0.78in;
+        grid-template-rows: auto 1fr auto;
+        column-gap: 10px;
+      }
+      .front .brand {
+        grid-column: 1 / -1;
+        text-align: left;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+      .vip {
+        display: inline-block;
+        margin: 1px 0 0;
+        padding: 2px 8px;
+        background: transparent;
+        border: 1px solid var(--gold);
+        color: var(--gold-light);
+        font: 600 6.5px/1 Barlow, sans-serif;
+        letter-spacing: 0.22em;
+      }
+      .props {
+        grid-column: 1;
+        grid-row: 2;
+        align-self: center;
+        margin: 0;
+        text-align: left;
+        font: 600 16px/1.02 "Cormorant Garamond", Georgia, serif;
+        letter-spacing: 0.04em;
+      }
+      .props b { display: block; color: var(--champagne); }
+      .props b.hot { color: var(--gold-light); }
+      .scan {
+        grid-column: 2;
+        grid-row: 2 / 4;
+        align-self: end;
+        display: block;
+      }
+      .scan img {
+        width: 0.74in;
+        height: 0.74in;
+        background: #fff;
+        padding: 3px;
+        border: 2px solid var(--gold);
+        display: block;
+      }
+      .cue {
+        grid-column: 1;
+        grid-row: 3;
+        align-self: end;
+        margin: 0 0 4px;
+        font: 600 8.5px/1.05 Barlow, sans-serif;
+        letter-spacing: 0.14em;
+      }
+      .cue small {
+        display: block;
+        margin-top: 3px;
+        font: 700 7px/1 Barlow, sans-serif;
+        letter-spacing: 0.12em;
+        color: var(--gold-light);
+        text-transform: uppercase;
+      }
+      .edge {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 6px;
+        background: var(--gold);
+      }
+      .front::after {
+        content: "";
+        position: absolute;
+        width: 1.42in;
+        height: 1.42in;
+        right: -0.34in;
+        top: -0.32in;
+        border: 1px solid rgba(200, 164, 77, 0.35);
+        border-radius: 50%;
+        box-shadow:
+          inset 18px 0 0 -17px rgba(200, 164, 77, 0.28),
+          inset -18px 0 0 -17px rgba(200, 164, 77, 0.28);
+        pointer-events: none;
+      }
+      .back { display: flex; }
+      .back-minimal {
+        padding: 14px 18px 14px;
+        display: grid;
+        grid-template-columns: 1fr 0.82in;
+        grid-template-rows: auto 1fr auto;
+        column-gap: 14px;
+        background: var(--champagne);
+        color: var(--ink);
+      }
+      .back-minimal .logo {
+        grid-column: 1;
+        grid-row: 1;
+        justify-content: flex-start;
+      }
+      .back-minimal .mark {
+        background: var(--obsidian);
+        color: var(--gold);
+      }
+      .back-minimal .word { color: var(--obsidian); }
+      .back-minimal .tagline {
+        grid-column: 1;
+        grid-row: 2;
+        align-self: center;
+        margin: 0;
+        font: 600 23px/0.88 "Cormorant Garamond", Georgia, serif;
+        color: var(--obsidian);
+      }
+      .back-minimal .tagline span { color: #85691e; }
+      .audiences {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        padding: 8px 0;
+        border-top: 1px solid rgba(126, 100, 39, 0.42);
+        border-bottom: 1px solid rgba(126, 100, 39, 0.42);
+      }
+      .audiences p {
+        margin: 0;
+        font: 600 8px/1.25 Barlow, sans-serif;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+      .audiences strong {
+        display: block;
+        margin-bottom: 3px;
+        color: #70591e;
+        font-size: 7px;
+        letter-spacing: 0.18em;
+      }
+      .back-footer {
+        grid-column: 1;
+        grid-row: 3;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .back-minimal .url {
+        margin: 0;
+        font: 600 8px/1 Barlow, sans-serif;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #70591e;
+      }
+      .handle {
+        margin: 0;
+        font: 600 8px/1 Barlow, sans-serif;
+        letter-spacing: 0.16em;
+        color: var(--obsidian);
+      }
+      .driver-qr {
+        grid-column: 2;
+        grid-row: 1 / 4;
+        align-self: center;
+        text-align: center;
+      }
+      .driver-qr img {
+        display: block;
+        width: 0.76in;
+        height: 0.76in;
+        padding: 3px;
+        background: #fff;
+        border: 2px solid var(--gold);
+      }
+      .driver-qr strong,
+      .driver-qr span {
+        display: block;
+        text-transform: uppercase;
+      }
+      .driver-qr strong {
+        margin-top: 5px;
+        color: var(--obsidian);
+        font: 600 8px/1 Barlow, sans-serif;
+        letter-spacing: 0.18em;
+      }
+      .driver-qr span {
+        margin-top: 2px;
+        color: #70591e;
+        font: 600 6px/1.1 Barlow, sans-serif;
+        letter-spacing: 0.09em;
+      }
+      .rail {
+        width: 1.18in;
+        background: var(--gold);
+        color: var(--obsidian);
+        padding: 12px 10px 14px;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--gold-light);
+      }
+      .rail .mark {
+        background: var(--obsidian);
+        color: var(--gold);
+        width: 16px;
+        height: 16px;
+        font-size: 11px;
+      }
+      .rail h1 {
+        margin: 10px 0 0;
+        font: 600 18px/0.92 "Cormorant Garamond", Georgia, serif;
+        letter-spacing: 0.02em;
+      }
+      .copy {
+        flex: 1;
+        padding: 12px 13px 16px;
+        display: flex;
+        flex-direction: column;
+        background: var(--champagne);
+        color: var(--ink);
+      }
+      .mission {
+        margin: 0;
+        font: 600 15px/1.05 "Cormorant Garamond", Georgia, serif;
+        letter-spacing: 0.02em;
+      }
+      .tag {
+        margin: 4px 0 10px;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #7e6427;
+      }
+      .meta {
+        margin: 0;
+        font-size: 9.5px;
+        line-height: 1.45;
+      }
+      .meta span {
+        display: inline-block;
+        width: 42px;
+        color: #7e6427;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        font-size: 8px;
+      }
+      .pills {
+        margin-top: auto;
+        font: 700 7.5px/1.35 Oswald, Arial Narrow, sans-serif;
+        letter-spacing: 0.06em;
+        color: var(--ink);
+      }
+      @media screen {
+        .sheet { transform: scale(1.45); transform-origin: top center; padding-bottom: 140px; }
+      }
+      @media print {
+        body { background: #fff; }
+        .toolbar { display: none; }
+        .sheet { padding: 0; gap: 0; display: block; transform: none; }
+        .face { box-shadow: none; page-break-after: always; }
+        @page { size: 3.5in 2in; margin: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <p>VVIP Gold business card · 3.5 × 2 in · print front, flip, print back.</p>
+      <button type="button" onclick="window.print()">Print card</button>
+    </div>
+    <div class="sheet">
+      <article class="face front" aria-label="ASOC card front">
+        <div class="brand">
+          <div class="logo">
+            <div class="mark">A</div>
+            <div class="word"><span>A</span>SOC</div>
+          </div>
+          <span class="vip">PREMIUM EDITION</span>
+          <div class="rule"></div>
+        </div>
+        <div class="scan">
+          <img src="qr-post-load.svg" alt="QR code to post a load" />
+        </div>
+        <div class="props">
+          <b>NO BROKERS.</b>
+          <b class="hot">INSTANT PAY.</b>
+          <b>REAL RATES.</b>
+          <b class="hot">LIVE TRANSPARENCY.</b>
+        </div>
+        <p class="cue">
+          SCAN TO POST A LOAD
+          <small>americashipsonclick.com</small>
+        </p>
+        <div class="edge"></div>
+      </article>
+
+      <article class="face back back-minimal" aria-label="ASOC card back">
+        <div class="logo">
+          <div class="mark">A</div>
+          <div class="word"><span>A</span>SOC</div>
+        </div>
+        <p class="tagline">BOOK IT.<br />RUN IT.<br /><span>GET PAID.</span></p>
+        <div class="driver-qr">
+          <img src="qr-driver-signup.svg" alt="QR code for ASOC driver signup" />
+          <strong>Drivers</strong>
+          <span>Scan to sign up</span>
+        </div>
+        <div class="back-footer">
+          <p class="url">www.americashipsonclick.com</p>
+          <p class="handle">@ASOC</p>
+        </div>
+        <div class="edge"></div>
+      </article>
+    </div>
+  </body>
+</html>

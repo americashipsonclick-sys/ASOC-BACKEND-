@@ -1,0 +1,11 @@
+artifacts
+cache
+coverage
+coverage.json
+typechain-types
+data
+*.log
+.env
+.git
+.idea
+.DS_Store

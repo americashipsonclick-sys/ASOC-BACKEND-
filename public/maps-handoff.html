@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ASOC map handoff — LOAD-MAP-1</title>
+    <style>
+      :root {
+        --ink: #14171a;
+        --cream: #f4efe0;
+        --paper: #fbf6ea;
+        --green: #0f5132;
+        --muted: #5c5850;
+      }
+      body {
+        margin: 0;
+        background: var(--cream);
+        color: var(--ink);
+        font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
+      }
+      header {
+        background: var(--ink);
+        color: var(--cream);
+        padding: 14px 20px;
+        border-bottom: 3px solid #8247e5;
+      }
+      main { max-width: 720px; margin: 0 auto; padding: 28px 16px 64px; }
+      h1 { font-size: 28px; margin: 0 0 8px; }
+      .lede { color: var(--green); font-style: italic; margin: 0 0 20px; }
+      .block {
+        display: grid;
+        grid-template-columns: 1fr 148px;
+        gap: 14px;
+        background: var(--paper);
+        border: 2px solid var(--ink);
+        padding: 14px;
+      }
+      .badge { font: 700 11px/1 ui-monospace, monospace; text-transform: uppercase; color: #8a8478; }
+      .id { font: 700 18px/1.2 ui-monospace, monospace; margin: 6px 0; }
+      .cities span { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+      .meta { margin-top: 8px; display: flex; gap: 10px; font: 12px ui-monospace, monospace; }
+      .minimap { width: 148px; height: 112px; border: 2px solid var(--ink); overflow: hidden; }
+      .minimap img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .note { margin-top: 16px; color: var(--muted); font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <header><strong>AMERICA SHIPS ON CLICK</strong> · map handoff for Nishant</header>
+    <main>
+      <h1>Load card with route image</h1>
+      <p class="lede">Same slot the live board uses. Production swaps this file for the Google Static Maps URL.</p>
+      <article class="block">
+        <div>
+          <span class="badge">pending</span>
+          <div class="id">LOAD-MAP-1</div>
+          <div class="cities">Dallas, TX <span>origin</span><br />Houston, TX <span>destination</span></div>
+          <div class="meta"><span>239 mi</span><span>$2,400</span><span>dry van</span></div>
+        </div>
+        <div class="minimap">
+          <img src="/maps/sample-dallas-houston.png" width="400" height="220" alt="Dallas to Houston satellite route" />
+        </div>
+      </article>
+      <p class="note">Pickup 32.7767, −96.797 · Delivery 29.7604, −95.3698 · GET /api/maps/static returns the Google URL once GOOGLE_MAPS_API_KEY is set.</p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,110 @@
+---
+title: ASOC Database Entity-Relationship Diagram
+---
+erDiagram
+    DRIVERS {
+        text driver_id PK
+        text phone
+        boolean verified
+        text first_name
+        text vehicle_type
+        text truck_number
+        text trailer
+        double lat
+        double lng
+        double route_origin_lat
+        double route_origin_lng
+        double route_dest_lat
+        double route_dest_lng
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    LOADS {
+        serial id PK
+        text load_id UK
+        text driver_id FK
+        text driver_wallet
+        text plate
+        numeric miles
+        numeric rate
+        numeric reserve
+        text status
+        text accepted_via
+        double gps_lat
+        double gps_lng
+        boolean gps_flagged
+        jsonb proof_photos
+        text pickup_tx
+        text delivery_tx
+        text payout_tx
+        text mint_tx
+        jsonb payload
+        timestamptz accepted_at
+        timestamptz proof_at
+        timestamptz approved_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    SMS_OFFERS {
+        serial id PK
+        text token UK
+        text load_id FK
+        text driver_id FK
+        text phone
+        double miles_away
+        text twilio_sid
+        timestamptz created_at
+        timestamptz claimed_at
+    }
+
+    VOICE_ACTIONS {
+        serial id PK
+        text driver_id FK
+        text load_id FK
+        text transcript
+        text intent
+        boolean accepted
+        timestamptz created_at
+    }
+
+    AUDIT_LOGS {
+        serial id PK
+        text source
+        text event_type
+        jsonb payload
+        timestamptz created_at
+    }
+
+    RUNS {
+        serial id PK
+        text kind
+        text status
+        text summary
+        jsonb payload
+        timestamptz created_at
+    }
+
+    BOT_STATUS {
+        text bot_name PK
+        text status
+        text detail
+        timestamptz last_check
+    }
+
+    MESSAGES {
+        serial id PK
+        text from_wallet
+        text to_wallet
+        text content_hash
+        text fee
+        text tx_hash
+        timestamptz created_at
+    }
+
+    DRIVERS o|--o{ LOADS : "claims / hauls"
+    DRIVERS ||--o{ SMS_OFFERS : "receives"
+    LOADS ||--o{ SMS_OFFERS : "offered for"
+    DRIVERS ||--o{ VOICE_ACTIONS : "speaks"
+    LOADS o|--o{ VOICE_ACTIONS : "acted on"

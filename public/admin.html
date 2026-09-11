@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ASOC manual approve</title>
+    <style>
+      body { font: 15px/1.4 system-ui, sans-serif; background: #f4efe0; color: #14171a; margin: 0; }
+      main { max-width: 520px; margin: 0 auto; padding: 28px 16px; }
+      label { display: block; font-weight: 700; margin: 14px 0 6px; }
+      input { width: 100%; padding: 8px; border: 2px solid #14171a; box-sizing: border-box; }
+      button { margin-top: 16px; padding: 10px 14px; border: 2px solid #14171a; background: #0f5132; color: #f4efe0; font-weight: 700; cursor: pointer; }
+      pre { background: #14171a; color: #f4efe0; padding: 12px; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Manual approve</h1>
+      <p>GPS-flagged proof first. Then approve. USDC fires only after this click. PRODUCTION stays off.</p>
+      <label>Webhook secret</label>
+      <input id="secret" type="password" value="change-me" />
+      <label>Load ID</label>
+      <input id="loadId" placeholder="LOAD-1042" />
+      <button id="go">Approve and pay</button>
+      <pre id="out">waiting</pre>
+    </main>
+    <script>
+      document.getElementById("go").onclick = async () => {
+        const loadId = document.getElementById("loadId").value.trim();
+        const secret = document.getElementById("secret").value;
+        const out = document.getElementById("out");
+        out.textContent = "sending…";
+        try {
+          const res = await fetch("/api/admin/loads/" + encodeURIComponent(loadId) + "/approve", {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-webhook-secret": secret },
+            body: JSON.stringify({ approvedBy: "manual" }),
+          });
+          out.textContent = JSON.stringify(await res.json(), null, 2);
+        } catch (err) {
+          out.textContent = String(err);
+        }
+      };
+    </script>
+  </body>
+</html>

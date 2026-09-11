@@ -1,0 +1,17 @@
+node_modules/
+dist/
+cache/
+artifacts/
+typechain-types/
+.env
+coverage/
+coverage.json
+*.log
+.idea/
+.DS_Store
+data/
+.vercel
+.env*
+!.env.example
+*.zip
+health.json
