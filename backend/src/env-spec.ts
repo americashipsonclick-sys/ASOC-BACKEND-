@@ -79,6 +79,12 @@ export const ENV_SPEC: EnvSpec[] = [
     notes: "Shared secret for webhook + manual approve.",
   },
   {
+    name: "SESSION_SECRET",
+    group: "app",
+    secret: true,
+    notes: "Signs asoc.sid cookies. Blank falls back to WEBHOOK_SECRET. Never in git.",
+  },
+  {
     name: "ALCHEMY_API_KEY",
     group: "app",
     secret: true,

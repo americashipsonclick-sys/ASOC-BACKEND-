@@ -1,7 +1,7 @@
 import { expect } from "chai";
-import { isSecureWebhookSecret, verifySharedSecret } from "../src/alchemy";
-import { config } from "../src/config";
-import { usdcAmountToAsoc } from "../src/chain";
+import { isSecureWebhookSecret, verifySharedSecret } from "../backend/src/alchemy";
+import { config } from "../backend/src/config";
+import { usdcAmountToAsoc } from "../backend/src/chain";
 
 describe("payout mint webhook gate", () => {
   it("rejects a missing or wrong webhook secret", () => {

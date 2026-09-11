@@ -56,5 +56,5 @@ export const config = {
 };
 
 export function schemaSql(): string {
-  return readFileSync(path.join(__dirname, "db", "schema.sql"), "utf8");
+  return readFileSync(path.join(__dirname, "..", "..", "database", "schema.sql"), "utf8");
 }

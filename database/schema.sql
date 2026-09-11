@@ -139,3 +139,40 @@ ALTER TABLE drivers ADD COLUMN IF NOT EXISTS first_name TEXT;
 ALTER TABLE drivers ADD COLUMN IF NOT EXISTS truck_number TEXT;
 ALTER TABLE drivers ADD COLUMN IF NOT EXISTS trailer TEXT;
 
+-- Open this file in DBeaver against localhost:5432 / database asoc / user asoc.
+-- Cookie + session security (Phase 1 API).
+
+CREATE TABLE IF NOT EXISTS security_sessions (
+  session_id TEXT PRIMARY KEY,
+  csrf_token TEXT NOT NULL,
+  ip_hash TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS security_sessions_expires_idx ON security_sessions (expires_at);
+
+CREATE TABLE IF NOT EXISTS security_events (
+  id SERIAL PRIMARY KEY,
+  kind TEXT NOT NULL,
+  session_id TEXT,
+  path TEXT,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS security_events_created_idx ON security_events (created_at DESC);
+
+CREATE TABLE IF NOT EXISTS holders (
+  wallet TEXT PRIMARY KEY,
+  balance TEXT,
+  staked TEXT,
+  accrued TEXT,
+  is_premium BOOLEAN NOT NULL DEFAULT false,
+  locked_until TIMESTAMPTZ,
+  last_synced TIMESTAMPTZ NOT NULL DEFAULT now(),
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
