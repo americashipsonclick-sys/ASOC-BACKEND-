@@ -21,6 +21,22 @@ Every load must include at least one photo when it is posted. If no photo is ava
 
 Driver USDC on Base and the public haul ledger are already sketched in this repo. Do not block Phase 1 on them.
 
+## Polygon mainnet (Phase 1 control)
+
+Contract bytecode is in `contracts/ASOC.sol`. Deploy **ASOC only** to chain 137. Signing keys stay in Vercel secrets / local `.env` — never in git or chat.
+
+```bash
+npm run deploy:asoc:mainnet
+# prints ASOC_ADDRESS and DEPLOY_TX
+npm run vercel:prod-env   # sets ASOC_ADDRESS, PRIVATE_KEY, DRY_RUN=1, PRODUCTION=0
+curl https://<deployment>.vercel.app/health
+npm run phase1:mainnet:control   # mint 1 ASOC, stake, log tx hashes
+# wait exactly one hour
+npm run phase1:mainnet:claim
+```
+
+Keep `DRY_RUN=1` until that claim hash is on Polygon. Then, and only then, flip `DRY_RUN=0`.
+
 ## Prove Phase 1
 
 ```bash

@@ -18,6 +18,7 @@ import { startCoinstallCron, coinstallCheck } from "./cron";
 import { upsertDriverProfile, claimByToken, claimByReply } from "./notify";
 import { readDriverBalances } from "./chain";
 import { writeFileSync, mkdirSync } from "node:fs";
+import { healthPayload } from "./health";
 
 type RawReq = express.Request & { rawBody?: string };
 
@@ -328,7 +329,11 @@ app.post("/api/twilio/sms", async (req, res) => {
 });
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "asoc-web3" });
+  res.json(healthPayload());
+});
+
+app.get("/api/health", (_req, res) => {
+  res.json(healthPayload());
 });
 
 app.get("/feed", (_req, res) => {
