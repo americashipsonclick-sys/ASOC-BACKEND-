@@ -19,28 +19,24 @@ import { upsertDriverProfile, claimByToken, claimByReply } from "./notify";
 import { readDriverBalances } from "./chain";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { healthPayload } from "./health";
+import { allowedOrigin, applySecurity, cookiePolicy } from "./security";
 
 type RawReq = express.Request & { rawBody?: string };
 
 const app = express();
+app.set("trust proxy", 1);
+app.use(applySecurity);
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin) {
-        cb(null, true);
-        return;
-      }
-      const allowed =
-        origin.startsWith("http://localhost") ||
-        origin.startsWith("http://127.0.0.1") ||
-        origin.endsWith(".vercel.app") ||
-        origin === "https://www.americashipsonclick.com" ||
-        origin === "https://americashipsonclick.com";
-      cb(null, allowed);
+      cb(null, allowedOrigin(origin));
     },
+    credentials: true,
   }),
 );
-app.use(express.static(path.join(__dirname, "..", "public")));
+const repoRoot = path.join(__dirname, "..", "..");
+app.use(express.static(path.join(repoRoot, "frontend")));
+app.use("/uploads", express.static(path.join(repoRoot, "uploads")));
 app.use(express.urlencoded({ extended: false }));
 app.use(
   express.json({
@@ -145,8 +141,13 @@ app.get("/api/loads/stream", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
-  const loads = await listLoads();
-  res.write(`event: snapshot\ndata: ${JSON.stringify(loads)}\n\n`);
+  try {
+    const loads = await listLoads();
+    res.write(`event: snapshot\ndata: ${JSON.stringify(loads)}\n\n`);
+  } catch (err) {
+    res.write(`event: snapshot\ndata: []\n\n`);
+    console.warn("load stream snapshot skipped", err instanceof Error ? err.message : err);
+  }
   const onLoad = (load: unknown) => {
     res.write(`event: load\ndata: ${JSON.stringify(load)}\n\n`);
   };
@@ -159,8 +160,13 @@ app.get("/api/loads/available/stream", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
-  const loads = await listAvailableLoads();
-  res.write(`event: snapshot\ndata: ${JSON.stringify(loads)}\n\n`);
+  try {
+    const loads = await listAvailableLoads();
+    res.write(`event: snapshot\ndata: ${JSON.stringify(loads)}\n\n`);
+  } catch (err) {
+    res.write(`event: snapshot\ndata: []\n\n`);
+    console.warn("available stream snapshot skipped", err instanceof Error ? err.message : err);
+  }
   const onLoad = (load: Record<string, unknown>) => {
     if (isAvailableLoadStatus(load.status)) {
       res.write(`event: load\ndata: ${JSON.stringify(load)}\n\n`);
@@ -232,7 +238,7 @@ app.post("/api/uploads", (req, res) => {
     const ext = match[1].includes("png") ? "png" : match[1].includes("webp") ? "webp" : "jpg";
     const rawName = String(req.body?.name ?? `proof-${Date.now()}.${ext}`);
     const safe = rawName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
-    const dir = path.join(__dirname, "..", "public", "uploads");
+    const dir = path.join(repoRoot, "uploads");
     mkdirSync(dir, { recursive: true });
     const file = safe.endsWith(`.${ext}`) ? safe : `${safe}.${ext}`;
     writeFileSync(path.join(dir, file), Buffer.from(match[2], "base64"));
@@ -328,6 +334,20 @@ app.post("/api/twilio/sms", async (req, res) => {
   }
 });
 
+app.get("/api/security/policy", (_req, res) => {
+  res.json({ ok: true, policy: cookiePolicy() });
+});
+
+app.get("/api/security/session", (req, res) => {
+  const csrf = (req as express.Request & { asocCsrf?: string }).asocCsrf || "";
+  res.json({
+    ok: true,
+    csrf,
+    cookies: cookiePolicy().cookies,
+    csrfHeader: "x-csrf-token",
+  });
+});
+
 app.get("/health", (_req, res) => {
   res.json(healthPayload());
 });
@@ -337,7 +357,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.get("/feed", (_req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "feed.html"));
+  res.sendFile(path.join(repoRoot, "frontend", "feed.html"));
 });
 
 async function main() {

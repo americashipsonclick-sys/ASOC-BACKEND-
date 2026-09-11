@@ -2,6 +2,16 @@
 
 America Ships On Click. This repo is the contract + webhook foundation.
 
+Layout (separate frontend, backend, and Postgres):
+
+- `frontend/` — load board, Phase 1 wallet UI, cookie policy
+- `backend/src/` — Express API, webhook, security cookies
+- `database/schema.sql` — canonical Postgres SQL (open in DBeaver)
+- `uploads/` — proof photos
+- `contracts/` — ASOC token (Polygon)
+
+**This build:** webhook + ASOC contract. Prove a wallet can mint, stake, and receive the hourly bonus.
+
 **This build:** webhook + ASOC contract. Prove a wallet can mint, stake, and receive the hourly bonus.
 
 **Not this build:** plate logging, email, messaging. Those wait until mint/stake/bonus is solid on a connected wallet.
@@ -65,6 +75,26 @@ npm run db:migrate
 npm run api
 npm run deploy:polygon
 ```
+
+Postgres for DBeaver (`database/dbeaver.sql`):
+
+```
+Host: localhost
+Port: 5432
+Database: asoc
+Username: asoc
+Password: asoc
+SSL: off
+```
+
+```bash
+docker compose up -d postgres
+npm run db:migrate
+```
+
+Then in DBeaver: New Connection → PostgreSQL → those fields. The objects are in `database/schema.sql` (`loads`, `holders`, `security_sessions`, `audit_logs`).
+
+Cookies: `asoc.sid` is HttpOnly + SameSite=Lax. `asoc.csrf` is a double-submit token; the frontend sends it as `x-csrf-token`. Machine webhooks stay CSRF-exempt and still use `x-webhook-secret`. Policy JSON: `GET /api/security/policy`.
 
 Set `ASOC_ADDRESS` from the deploy output. Set `DRY_RUN=0` and `PRIVATE_KEY` to mint on-chain through the webhook.
 

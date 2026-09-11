@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ASOC load board</title>
+    <script src="/js/security.js" defer></script>
     <style>
       :root {
         color-scheme: dark;
@@ -69,9 +70,22 @@
       button.primary { border-color: var(--accent); color: var(--accent); }
       .ok { color: var(--ok); }
       pre { white-space: pre-wrap; font-size: 12px; color: var(--muted); }
+      #cookie-policy {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 24px;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--muted);
+      }
     </style>
   </head>
   <body>
+    <div id="cookie-policy" hidden>
+      <span id="cookie-status">Setting secure session cookies…</span>
+      <a href="/api/security/policy" style="color:var(--accent)">Cookie policy</a>
+    </div>
     <header>
       <div>
         <h1>ASOC load board</h1>
@@ -151,7 +165,7 @@
       }
 
       async function refreshAudit() {
-        const res = await fetch("/api/voice/actions");
+        const res = await window.asocFetch("/api/voice/actions");
         const data = await res.json();
         auditEl.textContent = (data.actions || [])
           .slice(0, 12)
@@ -163,7 +177,7 @@
         const driverId = driverEl.value.trim();
         if (!selected) throw new Error("Select a load first");
         if (!driverId) throw new Error("Enter a driver ID");
-        const res = await fetch(`/api/loads/${encodeURIComponent(selected)}/accept`, {
+        const res = await window.asocFetch(`/api/loads/${encodeURIComponent(selected)}/accept`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ driverId, inputMethod, transcript }),

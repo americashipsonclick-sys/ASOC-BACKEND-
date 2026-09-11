@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { milesBetween } from "../src/geo";
-import { isClaimReply, matchDrivers, smsCopy, vehicleFits } from "../src/match";
+import { milesBetween } from "../backend/src/geo";
+import { isClaimReply, matchDrivers, smsCopy, vehicleFits } from "../backend/src/match";
 
 describe("load SMS match", () => {
   const dallas = { lat: 32.7767, lng: -96.797 };

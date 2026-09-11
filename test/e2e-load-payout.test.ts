@@ -6,11 +6,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import EmbeddedPostgres from "embedded-postgres";
-import { config } from "../src/config";
-import { setChainTestContext } from "../src/chain";
-import { closePool, migrate } from "../src/db/pool";
-import { dispatch, listAvailableLoads } from "../src/dispatch";
-import app from "../src/index";
+import { config } from "../backend/src/config";
+import { setChainTestContext } from "../backend/src/chain";
+import { closePool, migrate } from "../backend/src/db/pool";
+import { dispatch, listAvailableLoads } from "../backend/src/dispatch";
+import app from "../backend/src/index";
 
 const RATE = 100_000_000n;
 const RESERVE = 10_000_000n;

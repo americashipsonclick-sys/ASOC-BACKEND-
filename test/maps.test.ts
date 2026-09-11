@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { nativeDirectionsUrl, previewStaticRouteMap, staticRouteMapUrl } from "../src/maps";
+import { nativeDirectionsUrl, previewStaticRouteMap, staticRouteMapUrl } from "../backend/src/maps";
 
 describe("static route map", () => {
   it("returns null without a key so posting never waits on Google", () => {
