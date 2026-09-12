@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { isAvailableLoadStatus, validateLoadPostingEvidence } from "../src/dispatch";
+import { isAvailableLoadStatus, validateLoadPostingEvidence } from "../backend/src/dispatch";
 
 describe("load-board availability", () => {
   it("shows only unclaimed load statuses", () => {

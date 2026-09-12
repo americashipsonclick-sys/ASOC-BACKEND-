@@ -1,7 +1,7 @@
 import { config } from "./config";
 
 export async function sendSms(to: string, body: string): Promise<string> {
-  if (!config.twilioSid || !config.twilioToken || !config.twilioFrom || config.dryRun) {
+  if (!config.twilioSid || !config.twilioToken || !config.twilioFrom || config.notificationsDryRun) {
     console.log(`[sms dry-run] to=${to} ${body}`);
     return `dry-run:sms:${to}`;
   }

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { ethers } from "hardhat";
-import { assertPolygonMainnet } from "../src/mainnet";
+import { assertPolygonMainnet } from "../backend/src/mainnet";
 
 export const PROOF_PATH = path.join(__dirname, "..", "proof", "mainnet-control.json");
 const ONE = ethers.parseEther("1");

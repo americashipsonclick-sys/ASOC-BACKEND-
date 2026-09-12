@@ -10,5 +10,5 @@
     "rootDir": ".",
     "types": ["node"]
   },
-  "include": ["./src/**/*"]
+  "include": ["./backend/src/**/*", "./src/**/*", "./api/**/*"]
 }

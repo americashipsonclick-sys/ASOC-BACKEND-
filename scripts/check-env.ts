@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
-import { ENV_SPEC, isAmoyRpc, looksLikeLocalRpc } from "../src/env-spec";
-import { isSecureWebhookSecret } from "../src/alchemy";
+import { ENV_SPEC, isAmoyRpc, looksLikeLocalRpc } from "../backend/src/env-spec";
+import { isSecureWebhookSecret } from "../backend/src/alchemy";
 
 dotenv.config();
 
