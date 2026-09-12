@@ -138,4 +138,126 @@ ALTER TABLE loads ADD COLUMN IF NOT EXISTS weight_unit TEXT NOT NULL DEFAULT 'lb
 ALTER TABLE drivers ADD COLUMN IF NOT EXISTS first_name TEXT;
 ALTER TABLE drivers ADD COLUMN IF NOT EXISTS truck_number TEXT;
 ALTER TABLE drivers ADD COLUMN IF NOT EXISTS trailer TEXT;
+ALTER TABLE drivers ADD COLUMN IF NOT EXISTS email TEXT;
+
+CREATE TABLE IF NOT EXISTS driver_locations (
+  id BIGSERIAL PRIMARY KEY,
+  driver_id TEXT NOT NULL REFERENCES drivers(driver_id) ON DELETE CASCADE,
+  load_id TEXT REFERENCES loads(load_id) ON DELETE CASCADE,
+  lat DOUBLE PRECISION NOT NULL CHECK (lat BETWEEN -90 AND 90),
+  lng DOUBLE PRECISION NOT NULL CHECK (lng BETWEEN -180 AND 180),
+  accuracy_meters DOUBLE PRECISION,
+  recorded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS driver_locations_driver_idx
+  ON driver_locations (driver_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS driver_locations_load_idx
+  ON driver_locations (load_id, recorded_at DESC);
+
+CREATE TABLE IF NOT EXISTS load_status_events (
+  id BIGSERIAL PRIMARY KEY,
+  load_id TEXT NOT NULL REFERENCES loads(load_id) ON DELETE CASCADE,
+  from_status TEXT,
+  to_status TEXT NOT NULL,
+  actor_id TEXT,
+  note TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS load_status_events_load_idx
+  ON load_status_events (load_id, created_at ASC);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGSERIAL PRIMARY KEY,
+  load_id TEXT NOT NULL REFERENCES loads(load_id) ON DELETE CASCADE,
+  driver_id TEXT REFERENCES drivers(driver_id) ON DELETE SET NULL,
+  channel TEXT NOT NULL CHECK (channel IN ('sms', 'email')),
+  notification_type TEXT NOT NULL,
+  recipient TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('sent', 'logged', 'failed')),
+  provider_id TEXT,
+  detail_url TEXT,
+  error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS notifications_load_idx
+  ON notifications (load_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS notifications_driver_idx
+  ON notifications (driver_id, created_at DESC);
+
+-- Open this file in DBeaver against localhost:5432 / database asoc / user asoc.
+-- Cookie + session security (Phase 1 API).
+
+CREATE TABLE IF NOT EXISTS accounts (
+  account_id UUID PRIMARY KEY,
+  email TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('driver', 'shipper')),
+  display_name TEXT,
+  driver_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  disabled_at TIMESTAMPTZ,
+  failed_login_count INTEGER NOT NULL DEFAULT 0,
+  locked_until TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS accounts_email_unique_idx ON accounts (lower(email));
+CREATE UNIQUE INDEX IF NOT EXISTS accounts_driver_unique_idx
+  ON accounts (driver_id) WHERE driver_id IS NOT NULL;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS failed_login_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS security_sessions (
+  session_id TEXT PRIMARY KEY,
+  csrf_token TEXT NOT NULL,
+  ip_hash TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS security_sessions_expires_idx ON security_sessions (expires_at);
+ALTER TABLE security_sessions ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES accounts(account_id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS security_sessions_account_idx ON security_sessions (account_id);
+
+CREATE TABLE IF NOT EXISTS payment_attempts (
+  id BIGSERIAL PRIMARY KEY,
+  load_id TEXT NOT NULL REFERENCES loads(load_id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('processing', 'paid', 'failed')),
+  payout_chain TEXT NOT NULL DEFAULT 'base',
+  payout_tx TEXT,
+  error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS payment_attempts_load_idx
+  ON payment_attempts (load_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS security_events (
+  id SERIAL PRIMARY KEY,
+  kind TEXT NOT NULL,
+  session_id TEXT,
+  path TEXT,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS security_events_created_idx ON security_events (created_at DESC);
+
+CREATE TABLE IF NOT EXISTS holders (
+  wallet TEXT PRIMARY KEY,
+  balance TEXT,
+  staked TEXT,
+  accrued TEXT,
+  is_premium BOOLEAN NOT NULL DEFAULT false,
+  locked_until TIMESTAMPTZ,
+  last_synced TIMESTAMPTZ NOT NULL DEFAULT now(),
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb
+);
 

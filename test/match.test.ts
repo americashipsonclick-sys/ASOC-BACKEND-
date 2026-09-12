@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { milesBetween } from "../src/geo";
-import { isClaimReply, matchDrivers, smsCopy, vehicleFits } from "../src/match";
+import { milesBetween } from "../backend/src/geo";
+import { isClaimReply, matchDrivers, smsCopy, vehicleFits } from "../backend/src/match";
 
 describe("load SMS match", () => {
   const dallas = { lat: 32.7767, lng: -96.797 };
@@ -64,6 +64,8 @@ describe("load SMS match", () => {
       50,
     );
     expect(hits.map((h) => h.driverId)).to.deep.equal(["near-van"]);
+    expect(hits[0].compatibility).to.equal("exact");
+    expect(hits[0].compatibilityScore).to.equal(100);
   });
 
   it("treats YES / CLAIM / BOOK IT as a claim reply", () => {

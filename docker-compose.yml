@@ -9,6 +9,8 @@ services:
       - "5432:5432"
     volumes:
       - asoc_pg:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/dbeaver.sql:/docker-entrypoint-initdb.d/00-dbeaver.sql:ro
 
 volumes:
   asoc_pg:

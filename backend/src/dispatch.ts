@@ -1,7 +1,7 @@
 import { pool, audit, insertRun } from "./db/pool";
 import { isAddress } from "ethers";
 import { publishLoad, publishVoice } from "./events";
-import { emailReceipt, emailShipperTracking } from "./email";
+import { emailReceipt, emailShipperTracking, sendEmail } from "./email";
 import { config } from "./config";
 import {
   confirmPickupOnChain,
@@ -133,6 +133,32 @@ export async function acceptLoad(args: {
   const load = rows[0];
   publishLoad(load);
   await emailReceipt(asString(load.customer_email) || undefined, "Load accepted", payload);
+  const shipperEmail = asString(load.shipper_email) || undefined;
+  if (shipperEmail) {
+    const detailUrl = `${config.publicBaseUrl}/api/loads/${encodeURIComponent(loadId)}`;
+    try {
+      const providerId = await sendEmail(
+        shipperEmail,
+        `ASOC load ${loadId} accepted`,
+        `Driver ${driverId} accepted load ${loadId}.\n\nLoad details: ${detailUrl}`,
+      );
+      await pool.query(
+        `INSERT INTO notifications
+           (load_id, driver_id, channel, notification_type, recipient, status, provider_id, detail_url)
+         VALUES ($1,$2,'email','load_accepted',$3,$4,$5,$6)`,
+        [
+          loadId,
+          driverId,
+          shipperEmail,
+          providerId.startsWith("dry-run:") ? "logged" : "sent",
+          providerId,
+          detailUrl,
+        ],
+      );
+    } catch (err) {
+      console.warn("shipper acceptance email skipped", err instanceof Error ? err.message : err);
+    }
+  }
   return load;
 }
 
@@ -447,10 +473,10 @@ async function onLoadCreated(body: Record<string, unknown>) {
       loadId,
       body.pickupLat ?? body.pickup_lat ?? null,
       body.pickupLng ?? body.pickup_lng ?? null,
-      body.destLat ?? body.dest_lat ?? body.dropoffLat ?? body.dropoff_lat ?? null,
-      body.destLng ?? body.dest_lng ?? body.dropoffLng ?? body.dropoff_lng ?? null,
-      asString(body.origin ?? body.origin_label) || null,
-      asString(body.dest ?? body.dest_label) || null,
+      body.destLat ?? body.dest_lat ?? body.dropLat ?? body.drop_lat ?? body.dropoffLat ?? body.dropoff_lat ?? null,
+      body.destLng ?? body.dest_lng ?? body.dropLng ?? body.drop_lng ?? body.dropoffLng ?? body.dropoff_lng ?? null,
+      asString(body.origin ?? body.origin_label ?? body.pickup) || null,
+      asString(body.dest ?? body.dest_label ?? body.drop ?? body.dropoff) || null,
       asString(body.equipment ?? body.vehicleType) || null,
       commodity || null,
       hot,
@@ -646,7 +672,7 @@ async function onApprove(body: Record<string, unknown>) {
     customer_email: string | null;
   };
   if (current.status === "paid") throw new Error("load already paid");
-  if (current.status !== "proof" && current.status !== "submitted") {
+  if (current.status !== "proof" && current.status !== "submitted" && current.status !== "payment_processing") {
     throw new Error(`load must be GPS-proofed before approve (status ${current.status})`);
   }
   if (config.gpsProofRequired && !current.gps_flagged) {
@@ -664,6 +690,7 @@ async function onApprove(body: Record<string, unknown>) {
   const reserve = rate > 0n ? (rate * 10n) / 100n : asBig(body.reserve ?? current.reserve);
   if (!plate) throw new Error("plate required");
   if (!driver) throw new Error("driverWallet required");
+  if (!isAddress(driver)) throw new Error("valid driverWallet required");
   const usdcAmount = rate > reserve ? rate - reserve : 0n;
 
   const deliveryTx = await recordHaulOnChain({ plate, loadId, miles, rate, reserve });
@@ -724,6 +751,121 @@ async function onApprove(body: Record<string, unknown>) {
     asoc: mint.amount,
   });
   return load;
+}
+
+export async function processDeliveredPayment(
+  loadIdValue: unknown,
+  body: Record<string, unknown> = {},
+) {
+  const loadId = asString(loadIdValue).trim();
+  if (!loadId) throw new Error("loadId required");
+  if (config.payoutChain !== "base") throw new Error("driver USDC payouts are Base only");
+
+  const preflight = await pool.query("SELECT * FROM loads WHERE load_id = $1", [loadId]);
+  if (preflight.rowCount === 0) throw new Error("load not found");
+  if (preflight.rows[0].status === "paid") {
+    return { load: preflight.rows[0], payoutChain: "base", idempotent: true };
+  }
+  if (preflight.rows[0].status !== "delivered") {
+    throw new Error(`load must be delivered before payment (status ${preflight.rows[0].status})`);
+  }
+
+  const suppliedPhotos = collectPhotos(body);
+  const savedPhotos = Array.isArray(preflight.rows[0].proof_photos)
+    ? preflight.rows[0].proof_photos
+    : [];
+  const photos = suppliedPhotos.length > 0 ? suppliedPhotos : savedPhotos;
+  const latestLocation = await pool.query(
+    `SELECT lat, lng FROM driver_locations
+     WHERE load_id = $1 ORDER BY recorded_at DESC LIMIT 1`,
+    [loadId],
+  );
+  const gpsLat = Number(body.gpsLat ?? body.gps_lat ?? latestLocation.rows[0]?.lat);
+  const gpsLng = Number(body.gpsLng ?? body.gps_lng ?? latestLocation.rows[0]?.lng);
+  const gpsOk =
+    flagged(body.gpsFlagged ?? body.gps_flagged ?? body.gps) ||
+    (Number.isFinite(gpsLat) && Number.isFinite(gpsLng));
+  if (config.gpsProofRequired && !gpsOk) throw new Error("GPS location required before payment");
+  if (photos.length === 0) throw new Error("delivery photos required before payment");
+  await pool.query(
+    `UPDATE loads SET
+       gps_lat = $2,
+       gps_lng = $3,
+       gps_flagged = $4,
+       proof_photos = $5::jsonb,
+       proof_at = COALESCE(proof_at, now()),
+       plate = COALESCE(NULLIF($6, ''), plate),
+       driver_wallet = COALESCE(NULLIF($7, ''), driver_wallet)
+     WHERE load_id = $1`,
+    [
+      loadId,
+      Number.isFinite(gpsLat) ? gpsLat : null,
+      Number.isFinite(gpsLng) ? gpsLng : null,
+      gpsOk,
+      JSON.stringify(photos),
+      asString(body.plate),
+      asString(body.driverWallet ?? body.driver_wallet),
+    ],
+  );
+
+  const claimed = await pool.query(
+    `UPDATE loads
+     SET status = 'payment_processing', updated_at = now()
+     WHERE load_id = $1 AND status = 'delivered'
+     RETURNING *`,
+    [loadId],
+  );
+  if (claimed.rowCount === 0) {
+    const current = await pool.query("SELECT * FROM loads WHERE load_id = $1", [loadId]);
+    if (current.rows[0].status === "paid") {
+      return { load: current.rows[0], payoutChain: "base", idempotent: true };
+    }
+    throw new Error(`load must be delivered before payment (status ${current.rows[0].status})`);
+  }
+
+  const attempt = await pool.query(
+    `INSERT INTO payment_attempts (load_id, status, payout_chain)
+     VALUES ($1,'processing','base')
+     RETURNING id`,
+    [loadId],
+  );
+  const attemptId = attempt.rows[0].id;
+  try {
+    const load = await onApprove({
+      ...body,
+      loadId,
+      approvedBy: asString(body.approvedBy ?? body.approved_by) || "delivery_payment_endpoint",
+    });
+    await pool.query(
+      `UPDATE payment_attempts
+       SET status = 'paid', payout_tx = $2, completed_at = now()
+       WHERE id = $1`,
+      [attemptId, load.payout_tx ?? null],
+    );
+    return {
+      load,
+      payoutChain: "base",
+      payoutTx: load.payout_tx,
+      dryRun: String(load.payout_tx ?? "").startsWith("dry-run:"),
+      idempotent: false,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "payment failed";
+    await Promise.all([
+      pool.query(
+        `UPDATE payment_attempts
+         SET status = 'failed', error = $2, completed_at = now()
+         WHERE id = $1`,
+        [attemptId, message],
+      ),
+      pool.query(
+        `UPDATE loads SET status = 'delivered', updated_at = now()
+         WHERE load_id = $1 AND status = 'payment_processing'`,
+        [loadId],
+      ),
+    ]);
+    throw err;
+  }
 }
 
 async function onDriver(body: Record<string, unknown>) {
