@@ -3,244 +3,402 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ASOC load board</title>
+    <title>Golden VVIP desk — America Ships On Click</title>
+    <meta
+      name="description"
+      content="Visionary America Golden VVIP desk is open. Open books. House ~5%. 2% load rewards. Fish humans. Real freight. Real USA."
+    />
+    <meta property="og:title" content="Golden VVIP desk — America Ships On Click" />
+    <meta
+      property="og:description"
+      content="The desk is open. Open books. House ~5%. 2% load rewards. Fish humans. Real freight. Real USA."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
-        color-scheme: dark;
-        --bg: #111114;
-        --panel: #1a1a1f;
-        --line: #2a2a32;
-        --text: #ececec;
-        --muted: #9a9aa3;
-        --accent: #6ea8ff;
-        --ok: #7dcea0;
+        --obsidian: #090b0e;
+        --carbon: #12161c;
+        --gold: #c8a44d;
+        --gold-light: #ead9a0;
+        --champagne: #f4efe3;
+        --muted: #9a9078;
+        --line: rgba(200, 164, 77, 0.35);
+        --ok: #b7d4a8;
+        --bad: #e8b4a2;
       }
       * { box-sizing: border-box; }
+      html, body { margin: 0; }
       body {
-        margin: 0;
-        font: 15px/1.45 system-ui, sans-serif;
-        background: var(--bg);
-        color: var(--text);
+        min-height: 100vh;
+        background:
+          radial-gradient(1200px 600px at 80% -10%, rgba(200, 164, 77, 0.16), transparent 55%),
+          radial-gradient(900px 500px at -10% 110%, rgba(200, 164, 77, 0.1), transparent 50%),
+          var(--obsidian);
+        color: var(--champagne);
+        font-family: Barlow, "Segoe UI", sans-serif;
+      }
+      a { color: var(--gold-light); }
+      .frame {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 28px 20px 64px;
+      }
+      .goldbar {
+        height: 3px;
+        background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent);
+        margin-bottom: 22px;
       }
       header {
         display: flex;
-        align-items: center;
         justify-content: space-between;
         gap: 16px;
-        padding: 16px 24px;
-        border-bottom: 1px solid var(--line);
+        align-items: flex-start;
+        flex-wrap: wrap;
       }
-      h1 { font-size: 16px; font-weight: 600; margin: 0; }
-      .muted { color: var(--muted); font-size: 13px; }
-      main { display: grid; grid-template-columns: 1.4fr 0.8fr; min-height: calc(100vh - 57px); }
-      .list { padding: 16px 24px; }
-      .side { padding: 16px 24px; border-left: 1px solid var(--line); background: var(--panel); }
-      .row {
-        border: 1px solid var(--line);
-        padding: 12px 14px;
-        margin-bottom: 8px;
-        cursor: pointer;
-        background: var(--bg);
+      .brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
       }
-      .row[data-selected="true"] { border-color: var(--accent); }
-      .row h2 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
-      .load-summary { display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: center; }
-      .load-summary.no-photo { grid-template-columns: 1fr; }
-      .load-photo { width: 72px; height: 54px; object-fit: cover; border: 1px solid var(--line); }
-      .specs { margin-top: 4px; color: var(--text); font-size: 12px; }
-      .empty { color: var(--muted); padding: 28px 0; text-align: center; }
-      label { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 6px; }
-      input {
-        width: 100%;
-        background: var(--bg);
-        color: var(--text);
-        border: 1px solid var(--line);
-        padding: 8px 10px;
+      .mark {
+        width: 36px;
+        height: 36px;
+        background: var(--gold);
+        color: var(--obsidian);
+        display: grid;
+        place-items: center;
+        font: 700 16px/1 Barlow, sans-serif;
       }
-      button {
-        margin-top: 12px;
-        margin-right: 8px;
-        border: 1px solid var(--line);
-        background: var(--bg);
-        color: var(--text);
+      .word {
+        font: 700 22px/1 Barlow, sans-serif;
+        letter-spacing: 0.18em;
+      }
+      .word span { color: var(--gold); }
+      .sub {
+        margin: 4px 0 0;
+        font-size: 11px;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .badge {
+        border: 1px solid var(--gold);
+        color: var(--gold-light);
         padding: 8px 12px;
+        letter-spacing: 0.18em;
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 36px;
+        margin-top: 48px;
+        align-items: start;
+      }
+      h1 {
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: clamp(42px, 7vw, 84px);
+        font-weight: 600;
+        line-height: 0.92;
+        margin: 0 0 18px;
+      }
+      h1 em {
+        font-style: italic;
+        color: var(--gold-light);
+      }
+      .lede {
+        font-size: 18px;
+        max-width: 36rem;
+        color: #d8d0c0;
+        line-height: 1.45;
+      }
+      .punches {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 28px 0 0;
+      }
+      .punches b {
+        display: block;
+        border: 1px solid var(--line);
+        background: rgba(18, 22, 28, 0.72);
+        padding: 14px 12px 12px;
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .punches span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font: 500 11px/1.3 Barlow, sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .desk {
+        border: 1px solid var(--gold);
+        background: var(--carbon);
+        padding: 22px 20px 20px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+      }
+      .desk h2 {
+        margin: 0 0 6px;
+        font: 600 28px/1 "Cormorant Garamond", Georgia, serif;
+      }
+      .desk p.hint {
+        margin: 0 0 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      label {
+        display: block;
+        margin: 12px 0 6px;
+        color: var(--gold-light);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      input, select, textarea {
+        width: 100%;
+        background: var(--obsidian);
+        color: var(--champagne);
+        border: 1px solid var(--line);
+        padding: 11px 12px;
+        font: 15px/1.4 Barlow, sans-serif;
+      }
+      textarea { min-height: 110px; resize: vertical; }
+      .hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+      button[type="submit"] {
+        margin-top: 16px;
+        width: 100%;
+        border: 0;
+        background: var(--gold);
+        color: var(--obsidian);
+        font: 700 13px/1 Barlow, sans-serif;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        padding: 14px 16px;
         cursor: pointer;
       }
-      button.primary { border-color: var(--accent); color: var(--accent); }
-      .ok { color: var(--ok); }
-      pre { white-space: pre-wrap; font-size: 12px; color: var(--muted); }
+      button[type="submit"]:hover { background: var(--gold-light); }
+      button[type="submit"]:disabled { opacity: 0.6; cursor: wait; }
+      #status { min-height: 1.4em; margin: 12px 0 0; font-size: 14px; }
+      #status.ok { color: var(--ok); }
+      #status.bad { color: var(--bad); }
+      .books {
+        margin-top: 56px;
+        border-top: 1px solid var(--line);
+        padding-top: 28px;
+      }
+      .books h2 {
+        font: 600 32px/1 "Cormorant Garamond", Georgia, serif;
+        margin: 0 0 8px;
+      }
+      .books > p {
+        color: var(--muted);
+        max-width: 40rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 18px;
+      }
+      article {
+        border: 1px solid var(--line);
+        padding: 18px 16px;
+        background: rgba(18, 22, 28, 0.55);
+      }
+      article h3 {
+        margin: 0 0 8px;
+        font: 600 22px/1.1 "Cormorant Garamond", Georgia, serif;
+        color: var(--gold-light);
+      }
+      article p { margin: 0; color: #d8d0c0; font-size: 14px; line-height: 1.45; }
+      footer {
+        margin-top: 48px;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+      }
+      @media (max-width: 860px) {
+        .hero, .grid, .punches { grid-template-columns: 1fr; }
+        h1 { font-size: 48px; }
+      }
     </style>
   </head>
   <body>
-    <header>
-      <div>
-        <h1>ASOC load board</h1>
-        <div class="muted">Live from Postgres. Voice and tap share one accept flow. Public ledger: <a href="/feed" style="color:var(--accent)">/feed</a></div>
-      </div>
-      <div class="muted" id="live">connecting…</div>
-    </header>
-    <main>
-      <section class="list">
-        <div class="muted">Available loads only. Once a driver claims one, it disappears from this board immediately.</div>
-        <div id="loads"></div>
+    <div class="frame">
+      <div class="goldbar"></div>
+      <header>
+        <div class="brand">
+          <div class="mark">A</div>
+          <div>
+            <div class="word">ASOC <span>GOLD</span></div>
+            <p class="sub">Visionary America · America Ships On Click</p>
+          </div>
+        </div>
+        <div class="badge">Golden VVIP desk open</div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <h1>The desk is open.<br /><em>The books are open.</em></h1>
+          <p class="lede">
+            This is the Golden VVIP desk for Visionary America — America Ships On Click.
+            Not a placeholder. Not a backend dump. A live desk for people who move real freight in the real USA.
+          </p>
+          <div class="punches">
+            <b>House ~5%<span>Taken at the house. On the books.</span></b>
+            <b>2% load rewards<span>Paid back on the load, not a story.</span></b>
+            <b>Fish humans<span>Real freight. Real USA. No ghost loads.</span></b>
+          </div>
+        </div>
+        <form class="desk" id="desk" novalidate>
+          <h2>Sit with the desk</h2>
+          <p class="hint">Leave a real card. It hits americashipsonclick@gmail.com as soon as you send — not a fake inbox.</p>
+          <label for="name">Name</label>
+          <input id="name" name="name" autocomplete="name" required />
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required />
+          <label for="phone">Phone</label>
+          <input id="phone" name="phone" autocomplete="tel" />
+          <label for="company">Company</label>
+          <input id="company" name="company" autocomplete="organization" />
+          <label for="interest">I am here as</label>
+          <select id="interest" name="interest">
+            <option value="holder">Holder</option>
+            <option value="shipper">Shipper</option>
+            <option value="driver">Driver</option>
+            <option value="partner">Partner</option>
+            <option value="other">Other</option>
+          </select>
+          <label for="note">What the desk should know</label>
+          <textarea id="note" name="note" placeholder="Lane, volume, wallet, timing — whatever is real."></textarea>
+          <div class="hp">
+            <label for="website">Website</label>
+            <input id="website" name="website" tabindex="-1" autocomplete="off" />
+          </div>
+          <button type="submit" id="send">Open the books — send my card</button>
+          <p id="status" role="status"></p>
+        </form>
       </section>
-      <aside class="side">
-        <label for="driverId">Driver ID</label>
-        <input id="driverId" placeholder="DRV-104" autocomplete="off" />
-        <button class="primary" id="acceptTap" type="button">Accept load</button>
-        <button id="listen" type="button">Speak command</button>
-        <p class="muted" id="heard"></p>
-        <p id="status"></p>
-        <h2 style="font-size:13px;margin:24px 0 8px">Voice audit</h2>
-        <pre id="audit"></pre>
-      </aside>
-    </main>
+
+      <section class="books">
+        <h2>Open books</h2>
+        <p>
+          Spec locked 2026-09-10. This page is the VIP desk and lead capture — not Phase 2 plate logging or messaging.
+          Phase 1 on-chain is mint, stake, and the hourly bonus.
+        </p>
+        <div class="grid">
+          <article>
+            <h3>Buy-in required</h3>
+            <p>You buy in. No minimum purchase. Any amount above zero is a seat.</p>
+          </article>
+          <article>
+            <h3>1% hourly, forever</h3>
+            <p>Regular holders: 1% hourly forever. No per-holder cap. Rewards still accrue during the lock.</p>
+          </article>
+          <article>
+            <h3>Premium is 5% instead</h3>
+            <p>Paid app members take 5% hourly instead of 1%. Never stacked. Premium is attested from paid membership, not a burn.</p>
+          </article>
+          <article>
+            <h3>30-day lock</h3>
+            <p>Thirty days before sell or cash-out after buy. Stake and hourly bonus still work while you wait.</p>
+          </article>
+          <article>
+            <h3>Funded by the reserve slice</h3>
+            <p>Holder rewards are funded only by 7% of the 10% transaction reserve — 0.7% of volume. 1% and 5% are split weights (1× vs 5×). Haircut pro-rata if claims exceed the slice. The contract never pays more than that slice.</p>
+          </article>
+          <article>
+            <h3>Freight is a separate pipe</h3>
+            <p>House ~5% and 2% load rewards live at this desk. Driver USDC payouts are Base only. Public haul ledger is Phase 2.</p>
+          </article>
+        </div>
+      </section>
+      <footer>
+        Pump Ndrive · Designer · Golden VVIP desk · Visionary America / America Ships On Click · Fish humans. Real freight. Real USA.
+      </footer>
+    </div>
     <script>
-      const loadsEl = document.getElementById("loads");
-      const heardEl = document.getElementById("heard");
-      const statusEl = document.getElementById("status");
-      const auditEl = document.getElementById("audit");
-      const liveEl = document.getElementById("live");
-      const driverEl = document.getElementById("driverId");
-      let selected = null;
-      let loads = [];
+      const form = document.getElementById("desk");
+      const status = document.getElementById("status");
+      const send = document.getElementById("send");
+      const inbox = "americashipsonclick@gmail.com";
 
-      function esc(value) {
-        return String(value ?? "")
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;");
+      function payload() {
+        return {
+          name: document.getElementById("name").value,
+          email: document.getElementById("email").value,
+          phone: document.getElementById("phone").value,
+          company: document.getElementById("company").value,
+          interest: document.getElementById("interest").value,
+          note: document.getElementById("note").value,
+          website: document.getElementById("website").value,
+          source: "golden-vvip-desk",
+        };
       }
 
-      function render() {
-        if (!loads.length) {
-          selected = null;
-          loadsEl.innerHTML = `<div class="empty">No available loads right now.</div>`;
-          return;
-        }
-        loadsEl.innerHTML = loads
-          .map((load) => {
-            const id = load.load_id;
-            const sel = selected === id;
-            const photos = Array.isArray(load.load_photos) ? load.load_photos : [];
-            const photo = photos[0] || "";
-            const measurements = [load.load_length, load.load_width, load.load_height];
-            const hasDimensions = measurements.every((value) => Number(value) > 0) && Number(load.load_weight) > 0;
-            const specs = hasDimensions
-              ? `${measurements.join(" × ")} ${load.dimension_unit || "in"} · ${load.load_weight} ${load.weight_unit || "lb"}`
-              : "Load photo supplied";
-            return `<article class="row" data-id="${id}" data-selected="${sel}">
-              <div class="load-summary ${photo ? "" : "no-photo"}">
-                ${photo ? `<img class="load-photo" src="${esc(photo)}" alt="Photo of load ${esc(id)}">` : ""}
-                <div>
-                  <h2>${esc(id)}</h2>
-                  <div class="muted">${esc(load.status)} · plate ${esc(load.plate || "—")} · ${esc(load.miles || "—")} mi</div>
-                  <div class="specs">${esc(specs)}</div>
-                </div>
-              </div>
-            </article>`;
-          })
-          .join("");
-        loadsEl.querySelectorAll(".row").forEach((row) => {
-          row.addEventListener("click", () => {
-            selected = row.getAttribute("data-id");
-            render();
-          });
-        });
-      }
-
-      async function refreshAudit() {
-        const res = await fetch("/api/voice/actions");
-        const data = await res.json();
-        auditEl.textContent = (data.actions || [])
-          .slice(0, 12)
-          .map((a) => `${a.created_at}  ${a.driver_id}  “${a.transcript}”  ${a.intent}${a.accepted ? " → accepted" : ""}`)
-          .join("\n") || "No voice actions yet.";
-      }
-
-      async function accept(inputMethod, transcript) {
-        const driverId = driverEl.value.trim();
-        if (!selected) throw new Error("Select a load first");
-        if (!driverId) throw new Error("Enter a driver ID");
-        const res = await fetch(`/api/loads/${encodeURIComponent(selected)}/accept`, {
+      async function postJson(url, body) {
+        const res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ driverId, inputMethod, transcript }),
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(body),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "accept failed");
-        statusEl.className = "ok";
-        statusEl.textContent = `Accepted via ${inputMethod}`;
-        loads = loads.filter((load) => load.load_id !== selected);
-        selected = loads[0]?.load_id || null;
-        render();
-        await refreshAudit();
+        const data = await res.json().catch(() => ({}));
+        return { res, data };
       }
 
-      document.getElementById("acceptTap").addEventListener("click", async () => {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        status.className = "";
+        status.textContent = "Sending to americashipsonclick@gmail.com now…";
+        send.disabled = true;
+        const body = payload();
+        const mailBody = {
+          _subject: "Golden VVIP desk — " + body.name,
+          _template: "table",
+          _captcha: "false",
+          name: body.name,
+          email: body.email,
+          phone: body.phone,
+          company: body.company,
+          interest: body.interest,
+          message: body.note || "(no note)",
+          source: body.source,
+        };
         try {
-          await accept("tap");
-        } catch (err) {
-          statusEl.className = "";
-          statusEl.textContent = err.message;
-        }
-      });
-
-      document.getElementById("listen").addEventListener("click", () => {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) {
-          statusEl.textContent = "Speech recognition not available in this browser.";
-          return;
-        }
-        const rec = new SR();
-        rec.lang = "en-US";
-        rec.interimResults = false;
-        rec.onresult = async (event) => {
-          const transcript = event.results[0][0].transcript;
-          heardEl.textContent = `Heard: “${transcript}”`;
-          try {
-            await accept("voice", transcript);
-          } catch (err) {
-            statusEl.className = "";
-            statusEl.textContent = err.message;
-            await refreshAudit();
+          const [desk, mail] = await Promise.allSettled([
+            postJson("/api/vvip/lead", body),
+            postJson("https://formsubmit.co/ajax/" + inbox, mailBody),
+          ]);
+          const deskOk = desk.status === "fulfilled" && desk.value.res.ok && desk.value.data.ok;
+          const mailOk = mail.status === "fulfilled" && mail.value.res.ok;
+          if (deskOk || mailOk) {
+            status.className = "ok";
+            status.textContent = "Received. Your card is in americashipsonclick@gmail.com now.";
+            form.reset();
+            return;
           }
-        };
-        rec.onerror = () => {
-          statusEl.textContent = "Mic error";
-        };
-        rec.start();
-        heardEl.textContent = "Listening…";
-      });
-
-      const stream = new EventSource("/api/loads/available/stream");
-      stream.addEventListener("snapshot", (event) => {
-        loads = JSON.parse(event.data);
-        liveEl.textContent = "live";
-        if (!loads.some((load) => load.load_id === selected)) {
-          selected = loads[0]?.load_id || null;
+          const err =
+            (desk.status === "fulfilled" && desk.value.data.error) ||
+            "The desk could not file that card. Try again.";
+          status.className = "bad";
+          status.textContent = err;
+        } catch (err) {
+          status.className = "bad";
+          status.textContent = err instanceof Error ? err.message : "Network error";
+        } finally {
+          send.disabled = false;
         }
-        render();
       });
-      stream.addEventListener("load", (event) => {
-        const load = JSON.parse(event.data);
-        const i = loads.findIndex((x) => x.load_id === load.load_id);
-        if (i >= 0) loads[i] = load;
-        else loads.unshift(load);
-        render();
-      });
-      stream.addEventListener("remove", (event) => {
-        const { loadId } = JSON.parse(event.data);
-        loads = loads.filter((load) => load.load_id !== loadId);
-        if (selected === loadId) selected = loads[0]?.load_id || null;
-        render();
-      });
-      stream.onerror = () => {
-        liveEl.textContent = "reconnecting";
-      };
-
-      refreshAudit();
     </script>
   </body>
 </html>
