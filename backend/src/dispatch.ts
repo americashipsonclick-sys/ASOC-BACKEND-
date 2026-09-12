@@ -690,6 +690,7 @@ async function onApprove(body: Record<string, unknown>) {
   const reserve = rate > 0n ? (rate * 10n) / 100n : asBig(body.reserve ?? current.reserve);
   if (!plate) throw new Error("plate required");
   if (!driver) throw new Error("driverWallet required");
+  if (!isAddress(driver)) throw new Error("valid driverWallet required");
   const usdcAmount = rate > reserve ? rate - reserve : 0n;
 
   const deliveryTx = await recordHaulOnChain({ plate, loadId, miles, rate, reserve });

@@ -337,6 +337,21 @@ describe("e2e load → claim → GPS proof → approve → USDC + ASOC mint", fu
       config.dryRun = true;
       setChainTestContext({ payoutSigner: null });
       try {
+        const invalidWalletResponse = await fetch(`${base}/api/payments/process`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-webhook-secret": config.webhookSecret,
+          },
+          body: JSON.stringify({
+            loadId,
+            plate: "OPS123",
+            driverWallet: "not-a-wallet",
+            photos: ["/proof-photos/e2e-dock-proof.jpg"],
+          }),
+        });
+        expect(invalidWalletResponse.status).to.equal(400);
+
         const paymentResponse = await fetch(`${base}/api/payments/process`, {
           method: "POST",
           headers: {
