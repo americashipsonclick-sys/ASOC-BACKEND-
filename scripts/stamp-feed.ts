@@ -1,4 +1,4 @@
-import { pool } from "../src/db/pool";
+import { pool } from "../backend/src/db/pool";
 
 const rows = [
   {

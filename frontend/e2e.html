@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ASOC E2E handoff — Nishant</title>
+    <script src="/js/security.js"></script>
     <style>
       :root { --ink:#14171a; --cream:#f4efe0; --green:#0f5132; --amber:#e3a008; --paper:#fbf6ea; }
       * { box-sizing: border-box; }
@@ -152,7 +153,7 @@
       document.getElementById("claim").onclick = async () => {
         const snap = await board();
         wallet = (snap.chain && snap.chain.driver) || wallet;
-        const res = await fetch("/api/loads/" + encodeURIComponent(loadId) + "/accept", {
+        const res = await window.asocFetch("/api/loads/" + encodeURIComponent(loadId) + "/accept", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ driverId, driverWallet: wallet }),
@@ -162,7 +163,7 @@
       };
 
       document.getElementById("proof").onclick = async () => {
-        const res = await fetch("/api/loads/" + encodeURIComponent(loadId) + "/proof", {
+        const res = await window.asocFetch("/api/loads/" + encodeURIComponent(loadId) + "/proof", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
@@ -181,7 +182,7 @@
       };
 
       document.getElementById("approve").onclick = async () => {
-        const res = await fetch("/api/admin/loads/" + encodeURIComponent(loadId) + "/approve", {
+        const res = await window.asocFetch("/api/admin/loads/" + encodeURIComponent(loadId) + "/approve", {
           method: "POST",
           headers: { "content-type": "application/json", "x-webhook-secret": secret },
           body: JSON.stringify({ approvedBy: "manual" }),

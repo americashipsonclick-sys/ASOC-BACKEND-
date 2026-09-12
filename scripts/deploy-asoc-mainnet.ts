@@ -1,7 +1,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { ethers } from "hardhat";
-import { assertFunded, assertPolygonMainnet } from "../src/mainnet";
+import { assertFunded, assertPolygonMainnet } from "../backend/src/mainnet";
 
 /** Deploy ASOC only to Polygon mainnet (137). Does not deploy HaulLedger or DriverPayout. */
 async function main() {

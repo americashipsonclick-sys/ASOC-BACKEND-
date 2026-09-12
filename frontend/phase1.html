@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ASOC Phase 1 — mint, stake, bonus</title>
+    <script src="/js/security.js"></script>
     <style>
       :root {
         color-scheme: dark;
@@ -148,6 +149,7 @@
         const secret = document.getElementById("secret").value;
         const res = await fetch("/api/webhook/ASOC", {
           method: "POST",
+          credentials: "include",
           headers: {
             "content-type": "application/json",
             "x-webhook-secret": secret,

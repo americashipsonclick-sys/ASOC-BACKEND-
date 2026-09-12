@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { parseVoiceCommand } from "../src/voice";
+import { parseVoiceCommand } from "../backend/src/voice";
 
 describe("voice commands", () => {
   it("treats accept this load and book it as the same accept intent", () => {

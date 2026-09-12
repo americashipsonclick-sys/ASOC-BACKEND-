@@ -11,6 +11,7 @@ export function healthPayload() {
     chainId: 137,
     asocAddress,
     dryRun: config.dryRun,
+    notificationsDryRun: config.notificationsDryRun,
     production: config.production,
     payoutChain: config.payoutChain,
     liveMintEnabled: config.dryRun === false && Boolean(asocAddress),

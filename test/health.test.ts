@@ -1,7 +1,7 @@
 import { expect } from "chai";
-import { healthPayload } from "../src/health";
-import { config } from "../src/config";
-import { assertFunded, assertPolygonMainnet } from "../src/mainnet";
+import { healthPayload } from "../backend/src/health";
+import { config } from "../backend/src/config";
+import { assertFunded, assertPolygonMainnet } from "../backend/src/mainnet";
 
 describe("production health", () => {
   it("is green and never includes signing keys", () => {

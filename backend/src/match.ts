@@ -27,6 +27,8 @@ export type MatchHit = {
   driverId: string;
   phone: string;
   milesAway: number;
+  compatibility: "exact" | "compatible" | "unspecified";
+  compatibilityScore: number;
 };
 
 const CLAIM_WORDS = /^(yes|y|claim|accept|book|book it|take it)$/i;
@@ -36,10 +38,19 @@ export function isClaimReply(body: string): boolean {
 }
 
 export function vehicleFits(driverType: string, loadEquipment: string): boolean {
+  return vehicleCompatibility(driverType, loadEquipment).score > 0;
+}
+
+export function vehicleCompatibility(driverType: string, loadEquipment: string): {
+  label: MatchHit["compatibility"];
+  score: number;
+} {
   const want = loadEquipment.trim().toLowerCase();
   const have = driverType.trim().toLowerCase();
-  if (!want || !have) return true;
-  return have === want || have.includes(want) || want.includes(have);
+  if (!want || !have) return { label: "unspecified", score: 50 };
+  if (have === want) return { label: "exact", score: 100 };
+  if (have.includes(want) || want.includes(have)) return { label: "compatible", score: 80 };
+  return { label: "compatible", score: 0 };
 }
 
 export function distanceToLoad(driver: DriverMatchInput, load: LoadMatchInput): number | null {
@@ -77,12 +88,21 @@ export function matchDrivers(
   const hits: MatchHit[] = [];
   for (const driver of drivers) {
     if (!driver.verified || !driver.phone) continue;
-    if (!vehicleFits(driver.vehicleType, load.equipment)) continue;
+    const compatibility = vehicleCompatibility(driver.vehicleType, load.equipment);
+    if (compatibility.score === 0) continue;
     const miles = distanceToLoad(driver, load);
     if (miles == null || miles > radiusMiles) continue;
-    hits.push({ driverId: driver.driverId, phone: driver.phone, milesAway: miles });
+    hits.push({
+      driverId: driver.driverId,
+      phone: driver.phone,
+      milesAway: miles,
+      compatibility: compatibility.label,
+      compatibilityScore: compatibility.score,
+    });
   }
-  return hits.sort((a, b) => a.milesAway - b.milesAway);
+  return hits.sort(
+    (a, b) => a.milesAway - b.milesAway || b.compatibilityScore - a.compatibilityScore,
+  );
 }
 
 export function smsCopy(load: LoadMatchInput, milesAway: number, claimUrl: string): string {

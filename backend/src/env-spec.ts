@@ -79,6 +79,12 @@ export const ENV_SPEC: EnvSpec[] = [
     notes: "Shared secret for webhook + manual approve.",
   },
   {
+    name: "SESSION_SECRET",
+    group: "app",
+    secret: true,
+    notes: "Signs asoc.sid cookies. Blank falls back to WEBHOOK_SECRET. Never in git.",
+  },
+  {
     name: "ALCHEMY_API_KEY",
     group: "app",
     secret: true,
@@ -107,6 +113,12 @@ export const ENV_SPEC: EnvSpec[] = [
     group: "payout",
     defaultValue: "1",
     notes: "1 = no real money. Flip to 0 only for a test payout, never as production.",
+  },
+  {
+    name: "NOTIFICATIONS_DRY_RUN",
+    group: "comms",
+    defaultValue: "1",
+    notes: "1 logs SMS/email without sending. Independent from blockchain DRY_RUN.",
   },
   {
     name: "PRODUCTION",
