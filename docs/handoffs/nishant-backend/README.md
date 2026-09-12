@@ -165,3 +165,6 @@ For Vercel, add the same variables to the intended Preview/Production environmen
 6. Before exposing the current API, add application authentication/authorization to public mutating/read routes and validate Twilio's `X-Twilio-Signature`. The existing Twilio webhook does not verify that signature.
 7. Replace `/api/uploads` local filesystem persistence for Vercel; function filesystems are ephemeral.
 8. Confirm whether “ASU” names another service or repository. Nothing with that name is present here.
+9. Resolve the maps documentation mismatch: `MAPS-HANDOFF.md` advertises `GET /api/maps/static`, and `src/maps.ts` has the preview builder, but `src/index.ts` does not register that route.
+10. Normalize load-status vocabulary before mobile integration. The backend writes `claimed` and `driver_update`, while guards/UI also recognize `accepted`, `in_transit`, and `enroute`.
+11. Add direct tests for Twilio sending/signature handling, the inbound SMS route, driver-profile upserts, email delivery, and the hourly cron. Current tests cover matching/copy but not those provider-facing paths.
