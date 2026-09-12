@@ -30,6 +30,7 @@ describe("e2e load → claim → GPS proof → approve → USDC + ASOC mint", fu
     asocAddress: config.asocAddress,
     gpsProofRequired: config.gpsProofRequired,
     production: config.production,
+    notificationsDryRun: config.notificationsDryRun,
     webhookSecret: config.webhookSecret,
     alchemySigningKey: config.alchemySigningKey,
   };
@@ -53,6 +54,7 @@ describe("e2e load → claim → GPS proof → approve → USDC + ASOC mint", fu
     config.databaseUrl = `postgres://asoc:asoc@127.0.0.1:${port}/asoc`;
     config.dryRun = false;
     config.production = false;
+    config.notificationsDryRun = true;
     config.webhookSecret = "phase1-test-webhook-secret-at-least-32-characters";
     config.alchemySigningKey = "phase1-test-alchemy-signing-key";
     config.gpsProofRequired = true;
@@ -150,6 +152,142 @@ describe("e2e load → claim → GPS proof → approve → USDC + ASOC mint", fu
     expect(paid.mint_tx).to.match(/^0x/);
     expect(await usdc.balanceOf(driver.address)).to.equal(PAY);
     expect(await asoc.balanceOf(driver.address)).to.equal(PAY * 10n ** 12n);
+  });
+
+  it("matches drivers, alerts them, tracks location, advances status, and returns QR details", async () => {
+    const loadId = `OPS-${Date.now()}`;
+    const server = app.listen(0, "127.0.0.1");
+    await new Promise<void>((resolve) => server.once("listening", resolve));
+    try {
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("test server did not bind");
+      const base = `http://127.0.0.1:${address.port}`;
+      const sessionResponse = await fetch(`${base}/api/security/session`);
+      const session = (await sessionResponse.json()) as { csrf: string };
+      const cookies = sessionResponse.headers
+        .getSetCookie()
+        .map((cookie) => cookie.split(";")[0])
+        .join("; ");
+      const browserHeaders = {
+        "content-type": "application/json",
+        cookie: cookies,
+        "x-csrf-token": session.csrf,
+      };
+
+      for (const driver of [
+        {
+          driverId: "ops-near",
+          phone: "+12145550101",
+          email: "near@example.com",
+          vehicleType: "dry van",
+          lat: 32.78,
+          lng: -96.8,
+        },
+        {
+          driverId: "ops-next",
+          phone: "+12145550102",
+          email: "next@example.com",
+          vehicleType: "dry van",
+          lat: 32.9,
+          lng: -96.9,
+        },
+      ]) {
+        const response = await fetch(`${base}/api/drivers`, {
+          method: "POST",
+          headers: browserHeaders,
+          body: JSON.stringify(driver),
+        });
+        expect(response.status).to.equal(200);
+      }
+
+      await dispatch("load.created", {
+        loadId,
+        origin: "Dallas, TX",
+        dest: "Austin, TX",
+        pickupLat: 32.7767,
+        pickupLng: -96.797,
+        equipment: "dry van",
+        rate: "850",
+        shipperEmail: "shipper@example.com",
+        loadPhotos: ["/proof-photos/e2e-dock-proof.jpg"],
+      });
+
+      const matchedResponse = await fetch(`${base}/api/drivers/match`, {
+        method: "POST",
+        headers: browserHeaders,
+        body: JSON.stringify({ loadId }),
+      });
+      expect(matchedResponse.status).to.equal(200);
+      const matched = (await matchedResponse.json()) as {
+        count: number;
+        drivers: { driverId: string; milesAway: number }[];
+      };
+      expect(matched.count).to.equal(2);
+      expect(matched.drivers.map((driver) => driver.driverId)).to.deep.equal(["ops-near", "ops-next"]);
+      expect(matched.drivers[0].milesAway).to.be.at.most(matched.drivers[1].milesAway);
+
+      const alertResponse = await fetch(`${base}/api/notifications/alert`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-webhook-secret": config.webhookSecret,
+        },
+        body: JSON.stringify({ loadId, channels: ["sms", "email"] }),
+      });
+      expect(alertResponse.status).to.equal(200);
+      const alert = (await alertResponse.json()) as {
+        matched: number;
+        notifications: { status: string }[];
+      };
+      expect(alert.matched).to.equal(2);
+      expect(alert.notifications).to.have.length(4);
+      expect(alert.notifications.every((item) => item.status === "logged")).to.equal(true);
+
+      const acceptedResponse = await fetch(`${base}/api/loads/${loadId}/status`, {
+        method: "PATCH",
+        headers: browserHeaders,
+        body: JSON.stringify({ status: "accepted", actorId: "ops-near" }),
+      });
+      expect(acceptedResponse.status).to.equal(200);
+
+      const locationResponse = await fetch(`${base}/api/drivers/ops-near/location`, {
+        method: "POST",
+        headers: browserHeaders,
+        body: JSON.stringify({ loadId, lat: 31.9686, lng: -99.9018, accuracy: 12 }),
+      });
+      expect(locationResponse.status).to.equal(200);
+
+      for (const status of ["picked_up", "in_transit", "delivered"]) {
+        const response = await fetch(`${base}/api/loads/${loadId}/status`, {
+          method: "PUT",
+          headers: browserHeaders,
+          body: JSON.stringify({ status, actorId: "ops-near" }),
+        });
+        expect(response.status, status).to.equal(200);
+      }
+
+      const detailsResponse = await fetch(`${base}/api/loads/${loadId}`);
+      expect(detailsResponse.status).to.equal(200);
+      const details = (await detailsResponse.json()) as {
+        load: { status: string };
+        latestLocation: { driver_id: string };
+        statusHistory: unknown[];
+      };
+      expect(details.load.status).to.equal("delivered");
+      expect(details.latestLocation.driver_id).to.equal("ops-near");
+      expect(details.statusHistory).to.have.length(4);
+
+      const qrResponse = await fetch(`${base}/api/loads/${loadId}/qr`);
+      const qr = (await qrResponse.json()) as { qr: { loadId: string; qrValue: string } };
+      expect(qr.qr.loadId).to.equal(loadId);
+      expect(qr.qr.qrValue).to.include(`/api/loads/${loadId}`);
+
+      const notificationsResponse = await fetch(`${base}/api/loads/${loadId}/notifications`);
+      const notifications = (await notificationsResponse.json()) as { notifications: unknown[] };
+      expect(notifications.notifications).to.have.length(6);
+    } finally {
+      await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
+    }
   });
 
   it("proves HTTP webhook mint → wallet stake → hourly claim", async () => {

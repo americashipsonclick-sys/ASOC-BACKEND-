@@ -64,6 +64,8 @@ describe("load SMS match", () => {
       50,
     );
     expect(hits.map((h) => h.driverId)).to.deep.equal(["near-van"]);
+    expect(hits[0].compatibility).to.equal("exact");
+    expect(hits[0].compatibilityScore).to.equal(100);
   });
 
   it("treats YES / CLAIM / BOOK IT as a claim reply", () => {

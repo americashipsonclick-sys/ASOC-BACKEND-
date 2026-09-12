@@ -134,6 +134,8 @@ export function isCsrfExempt(req: Request): boolean {
   const path = req.path || req.url.split("?")[0];
   if (path.startsWith("/api/webhook")) return true;
   if (path.startsWith("/api/twilio")) return true;
+  // Server-to-server alert dispatch is authenticated with x-webhook-secret.
+  if (path === "/api/notifications/alert") return true;
   if (path.startsWith("/api/security/")) return true;
   return false;
 }

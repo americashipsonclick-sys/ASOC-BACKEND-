@@ -15,11 +15,20 @@ import {
 import { verifySharedSecret, verifyAlchemySignature, alchemyTokenBalances } from "./alchemy";
 import { bus } from "./events";
 import { startCoinstallCron, coinstallCheck } from "./cron";
-import { upsertDriverProfile, claimByToken, claimByReply } from "./notify";
+import { upsertDriverProfile, claimByToken, claimByReply, sendLoadAlerts } from "./notify";
 import { readDriverBalances } from "./chain";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { healthPayload } from "./health";
 import { allowedOrigin, applySecurity, cookiePolicy } from "./security";
+import {
+  getLoadDetails,
+  getLoadQrDetails,
+  listDrivers,
+  listLoadNotifications,
+  matchDriversForRequest,
+  updateDriverLocation,
+  updateLoadStatus,
+} from "./load-operations";
 
 type RawReq = express.Request & { rawBody?: string };
 
@@ -95,6 +104,34 @@ app.get("/api/loads/available", async (_req, res) => {
   res.json({ source: "postgres", loads });
 });
 
+app.get("/api/loads/:loadId/qr", async (req, res) => {
+  try {
+    res.json({ ok: true, qr: await getLoadQrDetails(req.params.loadId) });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "load QR lookup failed";
+    res.status(message === "load not found" ? 404 : 400).json({ error: message });
+  }
+});
+
+app.get("/api/loads/:loadId/notifications", async (req, res) => {
+  try {
+    const notifications = await listLoadNotifications(req.params.loadId);
+    res.json({ ok: true, loadId: req.params.loadId, notifications });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "notification lookup failed";
+    res.status(message === "load not found" ? 404 : 400).json({ error: message });
+  }
+});
+
+app.get("/api/loads/:loadId", async (req, res) => {
+  try {
+    res.json({ ok: true, ...(await getLoadDetails(req.params.loadId)) });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "load lookup failed";
+    res.status(message === "load not found" ? 404 : 400).json({ error: message });
+  }
+});
+
 app.post("/api/loads/:loadId/accept", async (req, res) => {
   try {
     const inputMethod = req.body?.inputMethod === "voice" ? "voice" : "tap";
@@ -123,6 +160,41 @@ app.post("/api/loads/:loadId/accept", async (req, res) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : "accept failed";
     res.status(400).json({ error: message });
+  }
+});
+
+async function loadStatusHandler(req: express.Request, res: express.Response) {
+  try {
+    const load = await updateLoadStatus(req.params.loadId, req.body ?? {});
+    res.json({ ok: true, load });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "status update failed";
+    res.status(message === "load not found" ? 404 : 400).json({ error: message });
+  }
+}
+
+app.patch("/api/loads/:loadId/status", loadStatusHandler);
+app.put("/api/loads/:loadId/status", loadStatusHandler);
+
+app.post("/api/drivers/match", async (req, res) => {
+  try {
+    res.json({ ok: true, ...(await matchDriversForRequest(req.body ?? {})) });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "driver match failed";
+    res.status(message === "load not found" ? 404 : 400).json({ error: message });
+  }
+});
+
+app.post("/api/notifications/alert", async (req, res) => {
+  if (!verifySharedSecret(secretFrom(req))) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  try {
+    res.json({ ok: true, ...(await sendLoadAlerts(req.body ?? {})) });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "notification alert failed";
+    res.status(message === "load not found" ? 404 : 400).json({ error: message });
   }
 });
 
@@ -295,6 +367,20 @@ app.post("/api/drivers", async (req, res) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : "driver save failed";
     res.status(400).json({ error: message });
+  }
+});
+
+app.get("/api/drivers", async (_req, res) => {
+  res.json({ ok: true, drivers: await listDrivers() });
+});
+
+app.post("/api/drivers/:driverId/location", async (req, res) => {
+  try {
+    const location = await updateDriverLocation(req.params.driverId, req.body ?? {});
+    res.json({ ok: true, location });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "location update failed";
+    res.status(message.endsWith("not found") ? 404 : 400).json({ error: message });
   }
 });
 

@@ -10,6 +10,9 @@ Layout (separate frontend, backend, and Postgres):
 - `uploads/` — proof photos
 - `contracts/` — ASOC token (Polygon)
 
+Load operations API documentation:
+[`docs/LOAD-OPERATIONS-API.md`](docs/LOAD-OPERATIONS-API.md).
+
 **This build:** webhook + ASOC contract. Prove a wallet can mint, stake, and receive the hourly bonus.
 
 **This build:** webhook + ASOC contract. Prove a wallet can mint, stake, and receive the hourly bonus.

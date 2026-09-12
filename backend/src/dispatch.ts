@@ -1,7 +1,7 @@
 import { pool, audit, insertRun } from "./db/pool";
 import { isAddress } from "ethers";
 import { publishLoad, publishVoice } from "./events";
-import { emailReceipt, emailShipperTracking } from "./email";
+import { emailReceipt, emailShipperTracking, sendEmail } from "./email";
 import { config } from "./config";
 import {
   confirmPickupOnChain,
@@ -133,6 +133,32 @@ export async function acceptLoad(args: {
   const load = rows[0];
   publishLoad(load);
   await emailReceipt(asString(load.customer_email) || undefined, "Load accepted", payload);
+  const shipperEmail = asString(load.shipper_email) || undefined;
+  if (shipperEmail) {
+    const detailUrl = `${config.publicBaseUrl}/api/loads/${encodeURIComponent(loadId)}`;
+    try {
+      const providerId = await sendEmail(
+        shipperEmail,
+        `ASOC load ${loadId} accepted`,
+        `Driver ${driverId} accepted load ${loadId}.\n\nLoad details: ${detailUrl}`,
+      );
+      await pool.query(
+        `INSERT INTO notifications
+           (load_id, driver_id, channel, notification_type, recipient, status, provider_id, detail_url)
+         VALUES ($1,$2,'email','load_accepted',$3,$4,$5,$6)`,
+        [
+          loadId,
+          driverId,
+          shipperEmail,
+          providerId.startsWith("dry-run:") ? "logged" : "sent",
+          providerId,
+          detailUrl,
+        ],
+      );
+    } catch (err) {
+      console.warn("shipper acceptance email skipped", err instanceof Error ? err.message : err);
+    }
+  }
   return load;
 }
 

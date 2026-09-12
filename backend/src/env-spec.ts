@@ -115,6 +115,12 @@ export const ENV_SPEC: EnvSpec[] = [
     notes: "1 = no real money. Flip to 0 only for a test payout, never as production.",
   },
   {
+    name: "NOTIFICATIONS_DRY_RUN",
+    group: "comms",
+    defaultValue: "1",
+    notes: "1 logs SMS/email without sending. Independent from blockchain DRY_RUN.",
+  },
+  {
     name: "PRODUCTION",
     group: "app",
     defaultValue: "0",

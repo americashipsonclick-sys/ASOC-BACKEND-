@@ -18,6 +18,7 @@ export const config = {
   webhookSecret: env("WEBHOOK_SECRET", specDefault("WEBHOOK_SECRET") || "change-me"),
   databaseUrl: env("DATABASE_URL", specDefault("DATABASE_URL")),
   dryRun: env("DRY_RUN", specDefault("DRY_RUN") || "1") !== "0",
+  notificationsDryRun: env("NOTIFICATIONS_DRY_RUN", specDefault("NOTIFICATIONS_DRY_RUN") || "1") !== "0",
   production: env("PRODUCTION", specDefault("PRODUCTION") || "0") === "1",
   polygonRpc: env("POLYGON_RPC", specDefault("POLYGON_RPC")),
   polygonMainnetRpc: env("POLYGON_MAINNET_RPC", specDefault("POLYGON_MAINNET_RPC")),

@@ -138,6 +138,55 @@ ALTER TABLE loads ADD COLUMN IF NOT EXISTS weight_unit TEXT NOT NULL DEFAULT 'lb
 ALTER TABLE drivers ADD COLUMN IF NOT EXISTS first_name TEXT;
 ALTER TABLE drivers ADD COLUMN IF NOT EXISTS truck_number TEXT;
 ALTER TABLE drivers ADD COLUMN IF NOT EXISTS trailer TEXT;
+ALTER TABLE drivers ADD COLUMN IF NOT EXISTS email TEXT;
+
+CREATE TABLE IF NOT EXISTS driver_locations (
+  id BIGSERIAL PRIMARY KEY,
+  driver_id TEXT NOT NULL REFERENCES drivers(driver_id) ON DELETE CASCADE,
+  load_id TEXT REFERENCES loads(load_id) ON DELETE CASCADE,
+  lat DOUBLE PRECISION NOT NULL CHECK (lat BETWEEN -90 AND 90),
+  lng DOUBLE PRECISION NOT NULL CHECK (lng BETWEEN -180 AND 180),
+  accuracy_meters DOUBLE PRECISION,
+  recorded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS driver_locations_driver_idx
+  ON driver_locations (driver_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS driver_locations_load_idx
+  ON driver_locations (load_id, recorded_at DESC);
+
+CREATE TABLE IF NOT EXISTS load_status_events (
+  id BIGSERIAL PRIMARY KEY,
+  load_id TEXT NOT NULL REFERENCES loads(load_id) ON DELETE CASCADE,
+  from_status TEXT,
+  to_status TEXT NOT NULL,
+  actor_id TEXT,
+  note TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS load_status_events_load_idx
+  ON load_status_events (load_id, created_at ASC);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGSERIAL PRIMARY KEY,
+  load_id TEXT NOT NULL REFERENCES loads(load_id) ON DELETE CASCADE,
+  driver_id TEXT REFERENCES drivers(driver_id) ON DELETE SET NULL,
+  channel TEXT NOT NULL CHECK (channel IN ('sms', 'email')),
+  notification_type TEXT NOT NULL,
+  recipient TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('sent', 'logged', 'failed')),
+  provider_id TEXT,
+  detail_url TEXT,
+  error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS notifications_load_idx
+  ON notifications (load_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS notifications_driver_idx
+  ON notifications (driver_id, created_at DESC);
 
 -- Open this file in DBeaver against localhost:5432 / database asoc / user asoc.
 -- Cookie + session security (Phase 1 API).
