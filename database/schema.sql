@@ -191,6 +191,26 @@ CREATE INDEX IF NOT EXISTS notifications_driver_idx
 -- Open this file in DBeaver against localhost:5432 / database asoc / user asoc.
 -- Cookie + session security (Phase 1 API).
 
+CREATE TABLE IF NOT EXISTS accounts (
+  account_id UUID PRIMARY KEY,
+  email TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('driver', 'shipper')),
+  display_name TEXT,
+  driver_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  disabled_at TIMESTAMPTZ,
+  failed_login_count INTEGER NOT NULL DEFAULT 0,
+  locked_until TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS accounts_email_unique_idx ON accounts (lower(email));
+CREATE UNIQUE INDEX IF NOT EXISTS accounts_driver_unique_idx
+  ON accounts (driver_id) WHERE driver_id IS NOT NULL;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS failed_login_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
+
 CREATE TABLE IF NOT EXISTS security_sessions (
   session_id TEXT PRIMARY KEY,
   csrf_token TEXT NOT NULL,
@@ -202,6 +222,22 @@ CREATE TABLE IF NOT EXISTS security_sessions (
 );
 
 CREATE INDEX IF NOT EXISTS security_sessions_expires_idx ON security_sessions (expires_at);
+ALTER TABLE security_sessions ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES accounts(account_id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS security_sessions_account_idx ON security_sessions (account_id);
+
+CREATE TABLE IF NOT EXISTS payment_attempts (
+  id BIGSERIAL PRIMARY KEY,
+  load_id TEXT NOT NULL REFERENCES loads(load_id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('processing', 'paid', 'failed')),
+  payout_chain TEXT NOT NULL DEFAULT 'base',
+  payout_tx TEXT,
+  error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS payment_attempts_load_idx
+  ON payment_attempts (load_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS security_events (
   id SERIAL PRIMARY KEY,

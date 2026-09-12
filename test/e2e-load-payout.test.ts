@@ -156,6 +156,7 @@ describe("e2e load → claim → GPS proof → approve → USDC + ASOC mint", fu
 
   it("matches drivers, alerts them, tracks location, advances status, and returns QR details", async () => {
     const loadId = `OPS-${Date.now()}`;
+    const [, opsWallet] = await ethers.getSigners();
     const server = app.listen(0, "127.0.0.1");
     await new Promise<void>((resolve) => server.once("listening", resolve));
     try {
@@ -173,6 +174,42 @@ describe("e2e load → claim → GPS proof → approve → USDC + ASOC mint", fu
         cookie: cookies,
         "x-csrf-token": session.csrf,
       };
+
+      for (const account of [
+        {
+          email: `driver-${loadId}@example.com`,
+          password: "Driver-password-1234",
+          role: "driver",
+          driverId: "ops-near",
+        },
+        {
+          email: `shipper-${loadId}@example.com`,
+          password: "Shipper-password-1234",
+          role: "shipper",
+        },
+      ]) {
+        const response = await fetch(`${base}/api/auth/register`, {
+          method: "POST",
+          headers: browserHeaders,
+          body: JSON.stringify(account),
+        });
+        expect(response.status).to.equal(201);
+      }
+      const loginResponse = await fetch(`${base}/api/auth/login`, {
+        method: "POST",
+        headers: browserHeaders,
+        body: JSON.stringify({
+          email: `shipper-${loadId}@example.com`,
+          password: "Shipper-password-1234",
+        }),
+      });
+      expect(loginResponse.status).to.equal(200);
+      const meResponse = await fetch(`${base}/api/auth/me`, {
+        headers: { cookie: cookies },
+      });
+      expect(meResponse.status).to.equal(200);
+      const me = (await meResponse.json()) as { account: { role: string } };
+      expect(me.account.role).to.equal("shipper");
 
       for (const driver of [
         {
@@ -200,19 +237,26 @@ describe("e2e load → claim → GPS proof → approve → USDC + ASOC mint", fu
         expect(response.status).to.equal(200);
       }
 
-      await dispatch("load.created", {
-        loadId,
-        origin: "Dallas, TX",
-        dest: "Austin, TX",
-        pickupLat: 32.7767,
-        pickupLng: -96.797,
-        equipment: "dry van",
-        rate: "850",
-        shipperEmail: "shipper@example.com",
-        loadPhotos: ["/proof-photos/e2e-dock-proof.jpg"],
+      const createResponse = await fetch(`${base}/api/loads`, {
+        method: "POST",
+        headers: browserHeaders,
+        body: JSON.stringify({
+          loadId,
+          origin: "Dallas, TX",
+          dest: "Austin, TX",
+          pickupLat: 32.7767,
+          pickupLng: -96.797,
+          equipment: "dry van",
+          rate: "850",
+          plate: "OPS123",
+          driverWallet: opsWallet.address,
+          shipperEmail: "shipper@example.com",
+          loadPhotos: ["/proof-photos/e2e-dock-proof.jpg"],
+        }),
       });
+      expect(createResponse.status).to.equal(201);
 
-      const matchedResponse = await fetch(`${base}/api/drivers/match`, {
+      const matchedResponse = await fetch(`${base}/api/drivers/map`, {
         method: "POST",
         headers: browserHeaders,
         body: JSON.stringify({ loadId }),
@@ -285,6 +329,50 @@ describe("e2e load → claim → GPS proof → approve → USDC + ASOC mint", fu
       const notificationsResponse = await fetch(`${base}/api/loads/${loadId}/notifications`);
       const notifications = (await notificationsResponse.json()) as { notifications: unknown[] };
       expect(notifications.notifications).to.have.length(6);
+
+      const detailAliasResponse = await fetch(`${base}/api/detail/${loadId}`);
+      expect(detailAliasResponse.status).to.equal(200);
+
+      const previousDryRun = config.dryRun;
+      config.dryRun = true;
+      setChainTestContext({ payoutSigner: null });
+      try {
+        const paymentResponse = await fetch(`${base}/api/payments/process`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-webhook-secret": config.webhookSecret,
+          },
+          body: JSON.stringify({
+            loadId,
+            plate: "OPS123",
+            driverWallet: opsWallet.address,
+            photos: ["/proof-photos/e2e-dock-proof.jpg"],
+          }),
+        });
+        const payment = (await paymentResponse.json()) as {
+          result: { payoutChain: string; dryRun: boolean; load: { status: string } };
+          error?: string;
+        };
+        expect(paymentResponse.status, payment.error).to.equal(200);
+        expect(payment.result.payoutChain).to.equal("base");
+        expect(payment.result.dryRun).to.equal(true);
+        expect(payment.result.load.status).to.equal("paid");
+
+        const replayResponse = await fetch(`${base}/api/payments/process`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-webhook-secret": config.webhookSecret,
+          },
+          body: JSON.stringify({ loadId }),
+        });
+        const replay = (await replayResponse.json()) as { result: { idempotent: boolean } };
+        expect(replayResponse.status).to.equal(200);
+        expect(replay.result.idempotent).to.equal(true);
+      } finally {
+        config.dryRun = previousDryRun;
+      }
     } finally {
       await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
     }

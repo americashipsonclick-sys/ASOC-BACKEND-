@@ -5,6 +5,14 @@ status progression, and QR-ready load details.
 
 ## Endpoints
 
+### Create a load
+
+`POST /api/loads`
+
+Accepts pickup/drop coordinates, equipment, rate, shipper details, and the
+existing ASOC posting evidence rule: at least one photo, or positive length,
+width, height, and weight. It stores the load and runs matching notifications.
+
 ### Match a posted load to drivers
 
 `POST /api/drivers/match`
@@ -16,6 +24,8 @@ status progression, and QR-ready load details.
 You may instead provide `loadId`, `pickupLat`, `pickupLng`, `equipment`, origin,
 destination, and rate directly. Results include compatible verified drivers,
 sorted by ascending distance.
+
+`POST /api/drivers/map` is an alias for clients that use the map naming.
 
 ### Alert matching drivers
 
@@ -76,9 +86,34 @@ stored in `load_status_events`.
 - `GET /api/loads/:loadId/notifications`
 - `GET /api/drivers`
 
+`GET /api/detail/:loadId` is an alias for load-detail clients.
+
 The QR endpoint returns a stable `qrValue` pointing to the load-detail endpoint,
 plus equipment, dimensions, weight, photo, and GPS-proof requirements. The
 frontend can render that value as a QR image without storing image files.
+
+### Driver and shipper accounts
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+
+Registration accepts `email`, a password of at least 12 characters, and role
+`driver` or `shipper`. Passwords are salted and hashed with Node.js `scrypt`;
+only signed HttpOnly session cookies are returned to the browser.
+
+### Process delivered-load payment
+
+`POST /api/payments/process`
+
+Requires `x-webhook-secret`. The load must be `delivered`, have a driver wallet,
+plate, GPS location, and delivery photos. The endpoint atomically claims the
+load for payment, records the attempt, and is idempotent after success.
+
+Driver USDC is paid on **Base only**. Polygon remains the ASOC token and holder
+reward network. With `DRY_RUN=1`, the response contains dry-run transaction
+references and no money moves.
 
 ## PostgreSQL
 
@@ -94,6 +129,9 @@ New database objects:
 - `driver_locations`
 - `load_status_events`
 - `notifications`
+- `accounts`
+- `payment_attempts`
+- `security_sessions.account_id`
 
 ## Environment variables
 
@@ -103,6 +141,7 @@ Required for deployed data:
 DATABASE_URL=postgresql://...
 PUBLIC_BASE_URL=https://your-backend-domain
 WEBHOOK_SECRET=at-least-32-random-characters
+SESSION_SECRET=a-different-32-character-random-secret
 MATCH_RADIUS_MILES=50
 NOTIFICATIONS_DRY_RUN=1
 ```

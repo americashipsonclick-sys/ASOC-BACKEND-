@@ -11,6 +11,7 @@ import {
   listVoiceActions,
   listAudit,
   acceptLoad,
+  processDeliveredPayment,
 } from "./dispatch";
 import { verifySharedSecret, verifyAlchemySignature, alchemyTokenBalances } from "./alchemy";
 import { bus } from "./events";
@@ -29,6 +30,7 @@ import {
   updateDriverLocation,
   updateLoadStatus,
 } from "./load-operations";
+import { currentAccount, loginAccount, logoutAccount, registerAccount } from "./auth";
 
 type RawReq = express.Request & { rawBody?: string };
 
@@ -104,6 +106,16 @@ app.get("/api/loads/available", async (_req, res) => {
   res.json({ source: "postgres", loads });
 });
 
+app.post("/api/loads", async (req, res) => {
+  try {
+    const result = await dispatch("load.created", req.body ?? {});
+    res.status(201).json({ ok: true, result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "load creation failed";
+    res.status(400).json({ error: message });
+  }
+});
+
 app.get("/api/loads/:loadId/qr", async (req, res) => {
   try {
     res.json({ ok: true, qr: await getLoadQrDetails(req.params.loadId) });
@@ -124,6 +136,15 @@ app.get("/api/loads/:loadId/notifications", async (req, res) => {
 });
 
 app.get("/api/loads/:loadId", async (req, res) => {
+  try {
+    res.json({ ok: true, ...(await getLoadDetails(req.params.loadId)) });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "load lookup failed";
+    res.status(message === "load not found" ? 404 : 400).json({ error: message });
+  }
+});
+
+app.get("/api/detail/:loadId", async (req, res) => {
   try {
     res.json({ ok: true, ...(await getLoadDetails(req.params.loadId)) });
   } catch (err) {
@@ -176,14 +197,17 @@ async function loadStatusHandler(req: express.Request, res: express.Response) {
 app.patch("/api/loads/:loadId/status", loadStatusHandler);
 app.put("/api/loads/:loadId/status", loadStatusHandler);
 
-app.post("/api/drivers/match", async (req, res) => {
+async function driverMatchHandler(req: express.Request, res: express.Response) {
   try {
     res.json({ ok: true, ...(await matchDriversForRequest(req.body ?? {})) });
   } catch (err) {
     const message = err instanceof Error ? err.message : "driver match failed";
     res.status(message === "load not found" ? 404 : 400).json({ error: message });
   }
-});
+}
+
+app.post("/api/drivers/match", driverMatchHandler);
+app.post("/api/drivers/map", driverMatchHandler);
 
 app.post("/api/notifications/alert", async (req, res) => {
   if (!verifySharedSecret(secretFrom(req))) {
@@ -194,6 +218,23 @@ app.post("/api/notifications/alert", async (req, res) => {
     res.json({ ok: true, ...(await sendLoadAlerts(req.body ?? {})) });
   } catch (err) {
     const message = err instanceof Error ? err.message : "notification alert failed";
+    res.status(message === "load not found" ? 404 : 400).json({ error: message });
+  }
+});
+
+app.post("/api/payments/process", async (req, res) => {
+  if (!verifySharedSecret(secretFrom(req))) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  try {
+    const result = await processDeliveredPayment(
+      req.body?.loadId ?? req.body?.load_id,
+      req.body ?? {},
+    );
+    res.json({ ok: true, result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "payment processing failed";
     res.status(message === "load not found" ? 404 : 400).json({ error: message });
   }
 });
@@ -432,6 +473,43 @@ app.get("/api/security/session", (req, res) => {
     cookies: cookiePolicy().cookies,
     csrfHeader: "x-csrf-token",
   });
+});
+
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const account = await registerAccount(req.body ?? {});
+    res.status(201).json({ ok: true, account });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "registration failed";
+    res.status(400).json({ error: message });
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const security = req as express.Request & { asocSession?: string; asocCsrf?: string };
+    const account = await loginAccount(
+      req.body ?? {},
+      security.asocSession ?? "",
+      security.asocCsrf ?? "",
+    );
+    res.json({ ok: true, account });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "login failed";
+    res.status(message === "invalid email or password" ? 401 : 400).json({ error: message });
+  }
+});
+
+app.post("/api/auth/logout", async (req, res) => {
+  const sessionId = (req as express.Request & { asocSession?: string }).asocSession ?? "";
+  await logoutAccount(sessionId);
+  res.json({ ok: true });
+});
+
+app.get("/api/auth/me", async (req, res) => {
+  const sessionId = (req as express.Request & { asocSession?: string }).asocSession ?? "";
+  const account = await currentAccount(sessionId);
+  res.status(account ? 200 : 401).json(account ? { ok: true, account } : { error: "unauthorized" });
 });
 
 app.get("/health", (_req, res) => {
