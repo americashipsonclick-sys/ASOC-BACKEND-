@@ -18,6 +18,7 @@ import { startCoinstallCron, coinstallCheck } from "./cron";
 import { upsertDriverProfile, claimByToken, claimByReply } from "./notify";
 import { readDriverBalances } from "./chain";
 import { writeFileSync, mkdirSync } from "node:fs";
+import { deliverVvipLead, parseVvipLead } from "./vvip-lead";
 
 type RawReq = express.Request & { rawBody?: string };
 
@@ -39,7 +40,16 @@ app.use(
     },
   }),
 );
-app.use(express.static(path.join(__dirname, "..", "public")));
+const publicDir = path.join(__dirname, "..", "public");
+app.use(express.static(publicDir));
+
+app.get("/", (_req, res) => {
+  res.sendFile(path.join(publicDir, "index.html"));
+});
+
+app.get("/board", (_req, res) => {
+  res.sendFile(path.join(publicDir, "board.html"));
+});
 app.use(express.urlencoded({ extended: false }));
 app.use(
   express.json({
@@ -327,8 +337,35 @@ app.post("/api/twilio/sms", async (req, res) => {
   }
 });
 
+app.post("/api/vvip/lead", async (req, res) => {
+  const parsed = parseVvipLead(req.body);
+  if (!parsed.ok) {
+    if (parsed.spam) {
+      res.json({ ok: true });
+      return;
+    }
+    res.status(400).json({ ok: false, error: parsed.error });
+    return;
+  }
+  try {
+    const result = await deliverVvipLead(parsed.lead);
+    if (!result.ok) {
+      res.status(502).json({
+        ok: false,
+        error: "Desk received the card but email did not go out. Try again.",
+        inbox: result.inbox,
+      });
+      return;
+    }
+    res.json({ ok: true, inbox: result.inbox, channels: result.channels });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "lead failed";
+    res.status(500).json({ ok: false, error: message });
+  }
+});
+
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "asoc-web3" });
+  res.json({ ok: true, service: "asoc-web3", desk: "golden-vvip" });
 });
 
 app.get("/feed", (_req, res) => {

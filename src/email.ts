@@ -1,7 +1,12 @@
 import { config } from "./config";
 import { audit } from "./db/pool";
 
-export async function sendEmail(to: string | undefined, subject: string, text: string): Promise<void> {
+export async function sendEmail(
+  to: string | undefined,
+  subject: string,
+  text: string,
+  html?: string,
+): Promise<void> {
   if (!to) {
     await audit("email", "skipped", { subject, reason: "no recipient" });
     return;
@@ -23,6 +28,7 @@ export async function sendEmail(to: string | undefined, subject: string, text: s
       to: [to],
       subject,
       text,
+      ...(html ? { html } : {}),
     }),
   });
 
