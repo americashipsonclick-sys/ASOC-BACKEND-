@@ -45,11 +45,23 @@ export function parseVvipLead(body: unknown): VvipLeadParse {
   const name = str(raw.name, 80);
   const email = str(raw.email, 120).toLowerCase();
   const phone = str(raw.phone, 40);
-  const company = str(raw.company, 80);
-  const interestRaw = str(raw.interest, 40).toLowerCase();
-  const interest = INTERESTS.has(interestRaw) ? interestRaw : "other";
-  const note = str(raw.note ?? raw.message, 2000);
-  const source = str(raw.source, 80) || "golden-vvip-desk";
+  const location = str(raw.location, 120);
+  const company = str(raw.company, 80) || location;
+  const interestRaw = str(raw.interest ?? raw.business_type, 40)
+    .toLowerCase()
+    .replace(/[^a-z]+/g, " ")
+    .trim();
+  const interest = INTERESTS.has(interestRaw)
+    ? interestRaw
+    : interestRaw.includes("shipper")
+      ? "shipper"
+      : interestRaw.includes("partner") || interestRaw.includes("investor")
+        ? "partner"
+        : interestRaw.includes("driver") || interestRaw.includes("carrier")
+          ? "driver"
+          : "other";
+  const note = str(raw.note ?? raw.message, 2000) || (location ? `Location: ${location}` : "");
+  const source = str(raw.source, 80) || (raw.business_type ? "asoc-vip-preregister-nine" : "golden-vvip-desk");
 
   if (name.length < 2) return { ok: false, error: "Name is required." };
   if (!isEmail(email)) return { ok: false, error: "A real email is required." };

@@ -35,4 +35,19 @@ describe("golden VVIP lead capture", () => {
     expect(mail.text).to.include("Dallas produce");
     expect(mail.html).to.include("Golden VVIP desk");
   });
+
+  it("accepts the live preregister form fields", () => {
+    const parsed = parseVvipLead({
+      name: "Cursor Preregister Verify",
+      email: "cursor-agent@americashipsonclick.com",
+      business_type: "Shipper",
+      location: "Austin, TX · VVIP-LIVE-8e28",
+    });
+    expect(parsed.ok).to.equal(true);
+    if (!parsed.ok) return;
+    expect(parsed.lead.interest).to.equal("shipper");
+    expect(parsed.lead.company).to.equal("Austin, TX · VVIP-LIVE-8e28");
+    expect(parsed.lead.source).to.equal("asoc-vip-preregister-nine");
+    expect(parsed.lead.note).to.include("Austin, TX");
+  });
 });
